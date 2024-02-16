@@ -1,5 +1,9 @@
 import { OAuth2Client } from "oslo/oauth2";
 import { TimeSpan, createDate } from "oslo";
+import { validateJWT } from "oslo/jwt";
+import { schema, db } from "./db";
+import { secret } from "./main";
+import { and, eq } from "drizzle-orm";
 
 const discordAuthorizeEndpoint = "https://discord.com/oauth2/authorize";
 const discordTokenEndpoint = "https://discord.com/api/oauth2/token";
@@ -140,4 +144,44 @@ export interface AuthProvider {
   ): Promise<URL>;
   validateAuthorizationCode(code: string): Promise<Tokens>;
   refreshAccessToken?(refreshToken: string): Promise<Tokens>;
+}
+
+type payload = { u: string; a: string };
+export async function verifyAuth(request: Request | string): Promise<payload> {
+  let token: string;
+  if (typeof request !== "string") {
+    const header = request.headers.get("authorization");
+    if (!header) {
+      throw new Error("Missing Authorization header");
+    }
+
+    const parts = header.split(" ");
+    if (parts.length !== 2 || parts[0] !== "Bearer")
+      throw new Error("Invalid Authorization header");
+    token = parts[1];
+  } else token = request;
+
+  let payload: payload;
+  // Make sure the token is valid and has not been tampered with
+  try {
+    // This function will throw an error incase of; invalid signature, expired token or inactive token (`nbf`)
+    // https://oslo.js.org/reference/jwt/validateJWT
+    const jwt = await validateJWT("HS256", secret, token);
+    payload = jwt.payload as payload;
+  } catch (e) {
+    throw new Error("Invalid token");
+  }
+
+  if (!payload.a || !payload.u) throw new Error("Invalid token payload");
+
+  const [session] = await db
+    .selectDistinct()
+    .from(schema.session)
+    .where(
+      and(eq(schema.session.userId, payload.u), eq(schema.session.token, token))
+    );
+
+  if (!session) throw new Error("Invalid session");
+
+  return payload;
 }
