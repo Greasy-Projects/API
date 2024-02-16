@@ -1,7 +1,6 @@
 import "dotenv/config";
 import * as mysql from "mysql2";
 import { drizzle } from "drizzle-orm/mysql2";
-import { migrate } from "drizzle-orm/mysql2/migrator";
 
 export const connection = mysql.createConnection({
   host: process.env.DB_HOST || "localhost",

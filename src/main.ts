@@ -1,13 +1,307 @@
-import { createServer } from "http";
+import express, { response } from "express";
+import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import "dotenv/config";
 import { createYoga } from "graphql-yoga";
-import { schema } from "./gql";
-
-function main() {
-  const yoga = createYoga({ schema });
-  const server = createServer(yoga);
-  server.listen(4000, () => {
-    console.info("Server is running on http://localhost:4000/graphql");
+import { schema as gql } from "./gql";
+import { CronJob } from "cron";
+import {
+  Auth,
+  AuthPlatform,
+  AuthProvider,
+  DiscordUserResponse,
+  Tokens,
+  TwitchUserResponse,
+} from "./auth";
+import { OAuth2RequestError, generateState } from "oslo/oauth2";
+import { db, schema } from "./db";
+import type { Request, Response } from "express";
+import { eq, lte } from "drizzle-orm";
+import { createJWT, validateJWT } from "oslo/jwt";
+import { createId } from "@paralleldrive/cuid2";
+import { TimeSpan } from "oslo";
+const app = express();
+app.use(cookieParser());
+const yoga = createYoga({ schema: gql });
+const yogaRouter = express.Router();
+const inDev = process.env.NODE_ENV === "development";
+function checkEnvVars(envVars: string[]): void {
+  const undefinedVars: string[] = [];
+  envVars.forEach((envVar) => {
+    if (!process.env[envVar] || process.env[envVar]?.trim() === "") {
+      undefinedVars.push(envVar);
+    }
   });
+
+  if (undefinedVars.length > 0) {
+    throw new Error(
+      `Missing environment variables: ${undefinedVars.join(", ")}`
+    );
+  }
 }
 
-main();
+try {
+  checkEnvVars([
+    "DB_HOST",
+    "DB_USER",
+    "DB_PASS",
+    "DB_NAME",
+    "JWT_SECRET",
+    "CALLBACK_URL",
+    "BASE_URL",
+    "TWITCH_CLIENT_ID",
+    "TWITCH_CLIENT_SECRET",
+    "DISCORD_CLIENT_ID",
+    "DISCORD_CLIENT_SECRET",
+  ]);
+} catch (error) {
+  console.error(error);
+  process.exit(1);
+}
+
+export const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+
+yogaRouter.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        "style-src": ["'self'", "unpkg.com"],
+        "script-src": ["'self'", "unpkg.com", "'unsafe-inline'"],
+        "img-src": ["'self'", "raw.githubusercontent.com"],
+      },
+    },
+  })
+);
+yogaRouter.use(yoga);
+app.use(yoga.graphqlEndpoint, yogaRouter);
+
+// Add the global CSP configuration for the rest of your server.
+// app.use(helmet());
+
+const discordAuth = new Auth(
+  AuthPlatform.Discord,
+  process.env.DISCORD_CLIENT_ID!,
+  process.env.DISCORD_CLIENT_SECRET!,
+  process.env.BASE_URL + "/login/callback?platform=discord"
+);
+const twitchAuth = new Auth(
+  AuthPlatform.Twitch,
+  process.env.TWITCH_CLIENT_ID!,
+  process.env.TWITCH_CLIENT_SECRET!,
+  process.env.BASE_URL + "/login/callback?platform=twitch"
+);
+app.get("/login/twitch", async (req: Request, res: Response) => {
+  await handleAuth(req, res, twitchAuth);
+});
+
+app.get("/login/discord", async (req: Request, res: Response) => {
+  await handleAuth(req, res, discordAuth);
+});
+
+app.get("/login/callback", async (req, res) => {
+  await handleAuthCallback(req, res);
+});
+app.get("/link/discord", (req, res) => {
+  res.json("Hello World!");
+});
+app.get("/link/twitch", (req, res) => {
+  res.json("Hello World!");
+});
+
+app.get("/token/validate", async (req, res) => {
+  const token = req.query.token?.toString();
+  if (!token) return;
+
+  try {
+    const jwtValidate = await validateJWT("HS256", secret, token);
+    res.json({ jwtValidate });
+  } catch (e) {
+    if (inDev) console.log(e);
+  }
+});
+
+app.listen(4000, () => {
+  console.log("Running a GraphQL API server at http://localhost:4000/graphql");
+});
+
+async function handleAuthCallback(req: Request, res: Response) {
+  const redirectPath = req.cookies.redirect_path ?? "/";
+  const callbackURL =
+    req.cookies.token_callback?.toString() ?? process.env.CALLBACK_URL;
+  const error = req.query.error?.toString() ?? null;
+  let url = new URL(callbackURL);
+  url.searchParams.set("redirect", redirectPath);
+  if (error) return res.redirect(301, url.toString());
+
+  const code = req.query.code?.toString() ?? null;
+  const state = req.query.state?.toString() ?? null;
+  const scope = req.query.scope?.toString() ?? null;
+  const platform = req.query.platform?.toString() ?? null;
+  const storedState = req.cookies.oauth_state ?? null;
+  const storedScopes = req.cookies.oauth_scopes ?? null;
+  if (
+    !platform ||
+    !(platform === "twitch" || platform === "discord") ||
+    !storedState ||
+    !storedScopes ||
+    !code ||
+    !state ||
+    state !== storedState
+  ) {
+    return res.status(400).send("Invalid request");
+  }
+
+  let user = {
+    id: "",
+    username: "",
+    displayName: "",
+    email: "",
+    avatar: "",
+  };
+  let tokens!: Tokens;
+  try {
+    if (platform === "twitch") {
+      tokens = await twitchAuth.validateAuthorizationCode(code);
+      const twitchUserResponse = await fetch(
+        "https://api.twitch.tv/helix/users",
+        {
+          headers: {
+            Authorization: `Bearer ${tokens.accessToken}`,
+            "Client-Id": process.env.TWITCH_CLIENT_ID || "",
+          },
+        }
+      );
+      const twitchUser: TwitchUserResponse = (await twitchUserResponse.json())
+        .data[0];
+      user.id = twitchUser.id;
+      user.email = twitchUser.email;
+      user.username = twitchUser.login;
+      user.displayName = twitchUser.display_name;
+      user.avatar = twitchUser.profile_image_url;
+    }
+    if (platform === "discord") {
+      tokens = await discordAuth.validateAuthorizationCode(code);
+
+      const discordUserResponse = await fetch(
+        "https://discord.com/api/users/@me",
+        {
+          headers: {
+            Authorization: `Bearer ${tokens.accessToken}`,
+          },
+        }
+      );
+
+      const discordUser: DiscordUserResponse = await discordUserResponse.json();
+      user.id = discordUser.id;
+      user.email = discordUser.email ?? "";
+      user.username = discordUser.username;
+      user.displayName = discordUser.global_name;
+      user.avatar = `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}`;
+    }
+
+    // Check if account already exists in database
+    const [existingAccount] = await db
+      .selectDistinct()
+      .from(schema.account)
+      .where(eq(schema.account.id, user.id));
+
+    //TODO: WHAT IF WE HAVE MULTIPLE ACCOUNTS WITH SAME EMAIL THAT ARENT CONNECTED????
+    let userId;
+    const [emailMatch] = await db
+      .select()
+      .from(schema.account)
+      .where(eq(schema.account.email, user.email))
+      .limit(1);
+
+    //TODO: link twitch account based on discord connections
+    //https://trello.com/c/i4S2DJDI/3
+    if (!existingAccount) {
+      if (emailMatch) {
+        userId = emailMatch.userId;
+      } else {
+        //if there is no existing user to link the account to, we create a new user.
+        userId = createId();
+        await db
+          .insert(schema.user)
+          .values({
+            id: userId,
+            primaryAccountId: user.id,
+          })
+          .then();
+      }
+      //if the account does not yet exist we insert it into the database
+      //either linking it to an existing user or the user we just created
+      await db.insert(schema.account).values({
+        ...user,
+        avatar: user.avatar,
+        platform,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresAt: tokens.accessTokenExpiresAt,
+        scope: storedScopes,
+        userId: userId,
+      });
+      //if account already exists we simply create an access token for the user linked to that account
+    } else userId = existingAccount.userId;
+    const payload = {
+      u: userId, //user
+      a: user.id, //account
+    };
+    const jwt = await createJWT("HS256", secret, payload, {
+      expiresIn: new TimeSpan(30, "d"),
+      issuer: "greasygang-api",
+      includeIssuedTimestamp: true,
+    });
+
+    url.searchParams.set("token", jwt);
+
+    // Store JWT in the database
+    await db.insert(schema.session).values({
+      userId: userId,
+      token: jwt,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+    });
+
+    res.redirect(301, url.toString());
+  } catch (e) {
+    if (e instanceof OAuth2RequestError) {
+      return res.status(400).send("OAuth2 Request Error");
+    }
+    console.log(e);
+    return res.status(500).send("Internal Server Error");
+  }
+}
+
+async function handleAuth(
+  req: Request,
+  res: Response,
+  authInstance: AuthProvider
+) {
+  const state = generateState();
+  const { scopes, redirect, token_callback } = req.query;
+  if (!scopes || scopes === "") {
+    return res.status(400).send("Scopes are required.");
+  }
+  if (redirect) res.cookie("redirect_path", redirect, { httpOnly: true });
+  if (token_callback)
+    res.cookie("token_callback", token_callback, { httpOnly: true });
+  res.cookie("oauth_state", state, { httpOnly: true });
+  res.cookie("oauth_scopes", scopes, { httpOnly: true });
+  const scopesArray = scopes.toString().split(" ");
+  const url = await authInstance.createAuthorizationURL(state, {
+    scopes: scopesArray.length ? scopesArray : undefined,
+  });
+  res.redirect(url.toString());
+}
+
+async function removeExpiredSessions() {
+  try {
+    const currentDate = new Date();
+    await db
+      .delete(schema.session)
+      .where(lte(schema.session.expiresAt, currentDate));
+  } catch (error) {
+    console.error("Error removing expired sessions:", error);
+  }
+}
+new CronJob("0 0 * * 0", removeExpiredSessions).start();

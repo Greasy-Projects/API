@@ -33,7 +33,7 @@ export const user = mysqlTable("user", {
   ...createdUpdated,
 });
 
-export const connection = mysqlTable("user_connection", {
+export const account = mysqlTable("user_account", {
   id: varchar("id", {
     length: 100,
   }).primaryKey(),
@@ -42,12 +42,13 @@ export const connection = mysqlTable("user_connection", {
   email: varchar("email", {
     length: 255,
   }),
+  avatar: varchar("avatar", { length: 255 }),
   userId: varchar("user_id", {
     length: 100,
   })
     .notNull()
     .references(() => user.id),
-  platform: mysqlEnum("platform", ["twitch", "discord"]),
+  platform: mysqlEnum("platform", ["twitch", "discord"]).notNull(),
   scope: varchar("scope", {
     length: 255,
   }).notNull(),
@@ -58,6 +59,24 @@ export const connection = mysqlTable("user_connection", {
     length: 100,
   }),
   expiresAt: datetime("expires_at").notNull(),
-  avatar: varchar("avatar", { length: 255 }),
   ...createdUpdated,
+});
+
+export const session = mysqlTable("session", {
+  id: varchar("id", {
+    length: 100,
+  })
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  userId: varchar("user_id", {
+    length: 100,
+  })
+    .notNull()
+    .references(() => user.id),
+  token: varchar("token", {
+    length: 255,
+  })
+    .notNull()
+    .unique(),
+  expiresAt: datetime("expires_at").notNull(),
 });
