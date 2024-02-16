@@ -12,11 +12,12 @@ import {
   DiscordUserResponse,
   Tokens,
   TwitchUserResponse,
+  verifyAuth,
 } from "./auth";
 import { OAuth2RequestError, generateState } from "oslo/oauth2";
 import { db, schema } from "./db";
 import type { Request, Response } from "express";
-import { eq, lte } from "drizzle-orm";
+import { and, desc, eq, gte, lte } from "drizzle-orm";
 import { createJWT, validateJWT } from "oslo/jwt";
 import { createId } from "@paralleldrive/cuid2";
 import { TimeSpan } from "oslo";
@@ -24,7 +25,6 @@ const app = express();
 app.use(cookieParser());
 const yoga = createYoga({ schema: gql });
 const yogaRouter = express.Router();
-const inDev = process.env.NODE_ENV === "development";
 function checkEnvVars(envVars: string[]): void {
   const undefinedVars: string[] = [];
   envVars.forEach((envVar) => {
@@ -109,14 +109,14 @@ app.get("/link/twitch", (req, res) => {
 });
 
 app.get("/token/validate", async (req, res) => {
-  const token = req.query.token?.toString();
-  if (!token) return;
+  const token = req.headers.authorization;
+  if (!token) return res.send(400);
 
   try {
-    const jwtValidate = await validateJWT("HS256", secret, token);
-    res.json({ jwtValidate });
+    await verifyAuth(token);
+    res.send(200);
   } catch (e) {
-    if (inDev) console.log(e);
+    res.status(401).send((e as Error).message);
   }
 });
 
@@ -229,8 +229,8 @@ async function handleAuthCallback(req: Request, res: Response) {
           })
           .then();
       }
-      //if the account does not yet exist we insert it into the database
-      //either linking it to an existing user or the user we just created
+      // If the account does not yet exist we insert it into the database
+      // Either linking it to an existing user or the user we just created
       await db.insert(schema.account).values({
         ...user,
         avatar: user.avatar,
@@ -241,26 +241,46 @@ async function handleAuthCallback(req: Request, res: Response) {
         scope: storedScopes,
         userId: userId,
       });
-      //if account already exists we simply create an access token for the user linked to that account
+      // If account already exists we simply create a token for the user linked to that account
     } else userId = existingAccount.userId;
-    const payload = {
-      u: userId, //user
-      a: user.id, //account
-    };
-    const jwt = await createJWT("HS256", secret, payload, {
-      expiresIn: new TimeSpan(30, "d"),
-      issuer: "greasygang-api",
-      includeIssuedTimestamp: true,
-    });
 
+    // Check if there is an existing and valid token for the user
+    // This ensures we don't flood the database with tokens, and have 2 at max per user
+    const D = new Date();
+    D.setDate(D.getDate() + 15);
+    const [existingSession] = await db
+      .select()
+      .from(schema.session)
+      .where(
+        // Make sure the token has at least 15 days left before expiry
+        and(eq(schema.session.userId, userId), gte(schema.session.expiresAt, D))
+      )
+      // Get the token with the longest time left before expiry
+      .orderBy(desc(schema.session.expiresAt))
+      .limit(1);
+
+    let jwt!: string;
+    if (existingSession) {
+      jwt = existingSession.token;
+    } else {
+      const payload = {
+        u: userId, // user (used for validation on api requests)
+        a: user.id, // account (currently not actually used)
+      };
+      jwt = await createJWT("HS256", secret, payload, {
+        expiresIn: new TimeSpan(30, "d"),
+        issuer: "greasygang-api",
+        includeIssuedTimestamp: true,
+      });
+
+      // Store the new token in the database
+      await db.insert(schema.session).values({
+        userId: userId,
+        token: jwt,
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      });
+    }
     url.searchParams.set("token", jwt);
-
-    // Store JWT in the database
-    await db.insert(schema.session).values({
-      userId: userId,
-      token: jwt,
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-    });
 
     res.redirect(301, url.toString());
   } catch (e) {
@@ -283,10 +303,10 @@ async function handleAuth(
     return res.status(400).send("Scopes are required.");
   }
   if (redirect) res.cookie("redirect_path", redirect, { httpOnly: true });
-  if (token_callback)
-    res.cookie("token_callback", token_callback, { httpOnly: true });
   res.cookie("oauth_state", state, { httpOnly: true });
   res.cookie("oauth_scopes", scopes, { httpOnly: true });
+  if (token_callback)
+    res.cookie("token_callback", token_callback, { httpOnly: true });
   const scopesArray = scopes.toString().split(" ");
   const url = await authInstance.createAuthorizationURL(state, {
     scopes: scopesArray.length ? scopesArray : undefined,
