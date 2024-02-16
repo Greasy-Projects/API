@@ -1,14 +1,14 @@
 import { InferResolvers } from "garph";
 import { YogaInitialContext } from "graphql-yoga";
 
-import {  queryType } from "./schema";
+import { queryType, mutationType } from "./schema";
 import { db, schema } from "../db";
 
-import {  eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { verifyAuth } from "../auth";
 
 type Resolvers = InferResolvers<
-  { Query: typeof queryType },
+  { Query: typeof queryType; Mutation: typeof mutationType },
   { context: YogaInitialContext }
 >;
 
@@ -20,12 +20,12 @@ export const resolvers: Resolvers = {
 
       const [user] = await db
         .selectDistinct()
-        .from(schema.user)
-        .where(eq(schema.user.id, data.u));
+        .from(schema.users)
+        .where(eq(schema.users.id, data.u));
       const [account] = await db
         .selectDistinct()
-        .from(schema.account)
-        .where(eq(schema.account.id, user.primaryAccountId));
+        .from(schema.accounts)
+        .where(eq(schema.accounts.id, user.primaryAccountId));
       return {
         userId: user.id,
         accountId: account.id,
@@ -38,5 +38,8 @@ export const resolvers: Resolvers = {
         updatedAt: user.updatedAt,
       };
     },
+  },
+  Mutation: {
+    
   },
 };

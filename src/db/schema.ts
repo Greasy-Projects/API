@@ -16,7 +16,7 @@ const createdUpdated = {
     .$defaultFn(() => new Date()),
 };
 
-export const user = mysqlTable("user", {
+export const users = mysqlTable("users", {
   id: varchar("id", {
     length: 100,
   })
@@ -33,7 +33,7 @@ export const user = mysqlTable("user", {
   ...createdUpdated,
 });
 
-export const account = mysqlTable("user_account", {
+export const accounts = mysqlTable("user_accounts", {
   id: varchar("id", {
     length: 100,
   }).primaryKey(),
@@ -47,7 +47,7 @@ export const account = mysqlTable("user_account", {
     length: 100,
   })
     .notNull()
-    .references(() => user.id),
+    .references(() => users.id),
   platform: mysqlEnum("platform", ["twitch", "discord"]).notNull(),
   scope: varchar("scope", {
     length: 255,
@@ -62,7 +62,7 @@ export const account = mysqlTable("user_account", {
   ...createdUpdated,
 });
 
-export const session = mysqlTable("session", {
+export const sessions = mysqlTable("sessions", {
   id: varchar("id", {
     length: 100,
   })
@@ -71,8 +71,7 @@ export const session = mysqlTable("session", {
   userId: varchar("user_id", {
     length: 100,
   })
-    .notNull()
-    .references(() => user.id),
+    .notNull(),
   token: varchar("token", {
     length: 255,
   })

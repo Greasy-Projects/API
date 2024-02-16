@@ -176,9 +176,9 @@ export async function verifyAuth(request: Request | string): Promise<payload> {
 
   const [session] = await db
     .selectDistinct()
-    .from(schema.session)
+    .from(schema.sessions)
     .where(
-      and(eq(schema.session.userId, payload.u), eq(schema.session.token, token))
+      and(eq(schema.sessions.userId, payload.u), eq(schema.sessions.token, token))
     );
 
   if (!session) throw new Error("Invalid session");

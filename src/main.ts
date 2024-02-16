@@ -101,12 +101,6 @@ app.get("/login/discord", async (req: Request, res: Response) => {
 app.get("/login/callback", async (req, res) => {
   await handleAuthCallback(req, res);
 });
-app.get("/link/discord", (req, res) => {
-  res.json("Hello World!");
-});
-app.get("/link/twitch", (req, res) => {
-  res.json("Hello World!");
-});
 
 app.get("/token/validate", async (req, res) => {
   const token = req.headers.authorization;
@@ -202,15 +196,14 @@ async function handleAuthCallback(req: Request, res: Response) {
     // Check if account already exists in database
     const [existingAccount] = await db
       .selectDistinct()
-      .from(schema.account)
-      .where(eq(schema.account.id, user.id));
+      .from(schema.accounts)
+      .where(eq(schema.accounts.id, user.id));
 
-    //TODO: WHAT IF WE HAVE MULTIPLE ACCOUNTS WITH SAME EMAIL THAT ARENT CONNECTED????
     let userId;
     const [emailMatch] = await db
       .select()
-      .from(schema.account)
-      .where(eq(schema.account.email, user.email))
+      .from(schema.accounts)
+      .where(eq(schema.accounts.email, user.email))
       .limit(1);
 
     //TODO: link twitch account based on discord connections
@@ -219,10 +212,14 @@ async function handleAuthCallback(req: Request, res: Response) {
       if (emailMatch) {
         userId = emailMatch.userId;
       } else {
-        //if there is no existing user to link the account to, we create a new user.
+        // If there is no existing user to link the account to, we create a new user.
+        // We only allow user creation with twitch accounts, discord accounts can be linked later on
+        if (platform === "discord")
+          // TODO: redirect to linking page
+          return res.status(403).send("Discord accounts can only be linked.");
         userId = createId();
         await db
-          .insert(schema.user)
+          .insert(schema.users)
           .values({
             id: userId,
             primaryAccountId: user.id,
@@ -231,7 +228,7 @@ async function handleAuthCallback(req: Request, res: Response) {
       }
       // If the account does not yet exist we insert it into the database
       // Either linking it to an existing user or the user we just created
-      await db.insert(schema.account).values({
+      await db.insert(schema.accounts).values({
         ...user,
         avatar: user.avatar,
         platform,
@@ -250,13 +247,16 @@ async function handleAuthCallback(req: Request, res: Response) {
     D.setDate(D.getDate() + 15);
     const [existingSession] = await db
       .select()
-      .from(schema.session)
+      .from(schema.sessions)
       .where(
         // Make sure the token has at least 15 days left before expiry
-        and(eq(schema.session.userId, userId), gte(schema.session.expiresAt, D))
+        and(
+          eq(schema.sessions.userId, userId),
+          gte(schema.sessions.expiresAt, D)
+        )
       )
       // Get the token with the longest time left before expiry
-      .orderBy(desc(schema.session.expiresAt))
+      .orderBy(desc(schema.sessions.expiresAt))
       .limit(1);
 
     let jwt!: string;
@@ -274,7 +274,7 @@ async function handleAuthCallback(req: Request, res: Response) {
       });
 
       // Store the new token in the database
-      await db.insert(schema.session).values({
+      await db.insert(schema.sessions).values({
         userId: userId,
         token: jwt,
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
@@ -318,8 +318,8 @@ async function removeExpiredSessions() {
   try {
     const currentDate = new Date();
     await db
-      .delete(schema.session)
-      .where(lte(schema.session.expiresAt, currentDate));
+      .delete(schema.sessions)
+      .where(lte(schema.sessions.expiresAt, currentDate));
   } catch (error) {
     console.error("Error removing expired sessions:", error);
   }
