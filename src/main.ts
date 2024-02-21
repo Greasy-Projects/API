@@ -206,8 +206,6 @@ async function handleAuthCallback(req: Request, res: Response) {
       .where(eq(schema.accounts.email, user.email))
       .limit(1);
 
-    //TODO: link twitch account based on discord connections
-    //https://trello.com/c/i4S2DJDI/3
     if (!existingAccount) {
       if (emailMatch) {
         userId = emailMatch.userId;
@@ -230,7 +228,6 @@ async function handleAuthCallback(req: Request, res: Response) {
       // Either linking it to an existing user or the user we just created
       await db.insert(schema.accounts).values({
         ...user,
-        avatar: user.avatar,
         platform,
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
@@ -316,12 +313,12 @@ async function handleAuth(
 
 async function removeExpiredSessions() {
   try {
-    const currentDate = new Date();
     await db
       .delete(schema.sessions)
-      .where(lte(schema.sessions.expiresAt, currentDate));
+      .where(lte(schema.sessions.expiresAt, new Date()));
   } catch (error) {
     console.error("Error removing expired sessions:", error);
   }
 }
+// At 00:00 on Sunday
 new CronJob("0 0 * * 0", removeExpiredSessions).start();

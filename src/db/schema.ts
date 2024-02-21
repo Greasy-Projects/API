@@ -70,8 +70,7 @@ export const sessions = mysqlTable("sessions", {
     .$defaultFn(() => createId()),
   userId: varchar("user_id", {
     length: 100,
-  })
-    .notNull(),
+  }).notNull(),
   token: varchar("token", {
     length: 255,
   })
@@ -79,3 +78,31 @@ export const sessions = mysqlTable("sessions", {
     .unique(),
   expiresAt: datetime("expires_at").notNull(),
 });
+
+// // TODO: logs table
+// export const logs = mysqlTable(
+//   "logs",
+//   {
+//     id: varchar("id", {
+//       length: 100,
+//     })
+//       .primaryKey()
+//       .$defaultFn(() => createId()),
+//     createdAt: datetime("created_at")
+//       .notNull()
+//       .$defaultFn(() => new Date()),
+//     userId: varchar("user_id", {
+//         length: 100,
+//       }).notNull(),
+//     message: text("message"),
+ 
+//     tags: 
+//   },
+//   (table) => {
+//   return {
+//     userIdIdx:  index("user_id_idx").on(table.userId),
+//     createdAtIdx:   index("created_at_idx").on(table.createdAt),
+//     //tags
+//   }
+//   }
+// );

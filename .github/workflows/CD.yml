@@ -1,0 +1,22 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches: ["main"]
+
+env:
+  PROD_ENV_FILE: ${{ secrets.PROD_ENV_FILE }}
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: pnpm install
+      - name: Create .env
+        run: |
+          echo $PROD_ENV_FILE | base64 --decode > .env
+      - run: pm2 restart production.config.cjs
