@@ -4,6 +4,7 @@ import { validateJWT } from "oslo/jwt";
 import { schema, db } from "./db";
 import { secret } from "./main";
 import { and, eq } from "drizzle-orm";
+import { GraphQLError } from "graphql";
 
 const discordAuthorizeEndpoint = "https://discord.com/oauth2/authorize";
 const discordTokenEndpoint = "https://discord.com/api/oauth2/token";
@@ -152,12 +153,12 @@ export async function verifyAuth(request: Request | string): Promise<payload> {
   if (typeof request !== "string") {
     const header = request.headers.get("authorization");
     if (!header) {
-      throw new Error("Missing Authorization header");
+      throw new GraphQLError("Missing Authorization header");
     }
 
     const parts = header.split(" ");
     if (parts.length !== 2 || parts[0] !== "Bearer")
-      throw new Error("Invalid Authorization header");
+      throw new GraphQLError("Invalid Authorization header");
     token = parts[1];
   } else token = request;
 
@@ -169,19 +170,22 @@ export async function verifyAuth(request: Request | string): Promise<payload> {
     const jwt = await validateJWT("HS256", secret, token);
     payload = jwt.payload as payload;
   } catch (e) {
-    throw new Error("Invalid token");
+    throw new GraphQLError("Invalid token");
   }
 
-  if (!payload.a || !payload.u) throw new Error("Invalid token payload");
+  if (!payload.a || !payload.u) throw new GraphQLError("Invalid token payload");
 
   const [session] = await db
     .selectDistinct()
     .from(schema.sessions)
     .where(
-      and(eq(schema.sessions.userId, payload.u), eq(schema.sessions.token, token))
+      and(
+        eq(schema.sessions.userId, payload.u),
+        eq(schema.sessions.token, token)
+      )
     );
 
-  if (!session) throw new Error("Invalid session");
+  if (!session) throw new GraphQLError("Invalid session");
 
   return payload;
 }
