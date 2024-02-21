@@ -113,9 +113,9 @@ app.get("/token/validate", async (req, res) => {
     res.status(401).send((e as Error).message);
   }
 });
-
-app.listen(4000, () => {
-  console.log("Running a GraphQL API server at http://localhost:4000/graphql");
+const port = process.env.PORT || 4000
+app.listen(port, () => {
+  console.log(`Running at ${process.env.BASE_URL}`);
 });
 
 async function handleAuthCallback(req: Request, res: Response) {
