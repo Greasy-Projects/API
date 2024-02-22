@@ -9,7 +9,7 @@ env:
   BETA_ENV_VARS: ${{ secrets.BETA_ENV_VARS }}
 
 jobs:
-  build:
+  build-beta:
     runs-on: self-hosted
     defaults:
      run:
