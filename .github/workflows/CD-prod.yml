@@ -16,6 +16,8 @@ jobs:
         working-directory: ./prod
     steps:
       - uses: actions/checkout@v4
+        with: 
+          path: 'prod'
       - uses: actions/setup-node@v4
         with:
           node-version: 20
