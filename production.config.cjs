@@ -7,7 +7,7 @@ module.exports = {
       args: "start",
       autorestart: true,
       env: {
-        NODE_ENV: "production", // Set the NODE_ENV environment variable to production
+        NODE_ENV: "production",
       },
     },
   ],

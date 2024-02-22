@@ -3,8 +3,8 @@ module.exports = {
     {
       name: "GreasyGang Beta API",
       port: "5011",
-      script: "ts-node",
-      args: "src/main.ts",
+      script: "pnpm",
+      args: "start",
       autorestart: true,
       env: {
         NODE_ENV: "production",
