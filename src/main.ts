@@ -102,28 +102,43 @@ app.get("/login/callback", async (req, res) => {
   await handleAuthCallback(req, res);
 });
 
-app.get("/token/validate", async (req, res) => {
+app.get("/validate/token", async (req, res) => {
   const token = req.headers.authorization;
-  if (!token) return res.send(400);
+  if (!token) return res.sendStatus(400);
 
   try {
     await verifyAuth(token);
-    res.send(200);
+    res.sendStatus(200);
   } catch (e) {
     res.status(401).send((e as Error).message);
   }
 });
-const port = process.env.PORT || 4000
+app.get("/validate/role", async (req, res) => {
+  const token = req.headers.authorization;
+  if (!token) return res.sendStatus(400);
+
+  try {
+    const data = await verifyAuth(token);
+
+    res.status(200).send(data.user.userType);
+  } catch (e) {
+    res.status(401).send((e as Error).message);
+  }
+});
+const port = process.env.PORT || 4000;
 app.listen(port, () => {
   console.log(`Running at ${process.env.BASE_URL}`);
 });
 
 async function handleAuthCallback(req: Request, res: Response) {
   const redirectPath = req.cookies.redirect_path ?? "/";
-  const callbackURL =
-    req.cookies.token_callback?.toString() ?? process.env.CALLBACK_URL;
   const error = req.query.error?.toString() ?? null;
-  let url = new URL(callbackURL);
+  let url: URL;
+  try {
+    url = new URL(req.cookies.token_callback?.toString());
+  } catch {
+    url = new URL(process.env.CALLBACK_URL ?? "");
+  }
   url.searchParams.set("redirect", redirectPath);
   if (error) return res.redirect(301, url.toString());
 
@@ -278,7 +293,7 @@ async function handleAuthCallback(req: Request, res: Response) {
       });
     }
     url.searchParams.set("token", jwt);
-
+    res.cookie("token_callback", null, { httpOnly: true });
     res.redirect(301, url.toString());
   } catch (e) {
     if (e instanceof OAuth2RequestError) {
@@ -302,8 +317,8 @@ async function handleAuth(
   if (redirect) res.cookie("redirect_path", redirect, { httpOnly: true });
   res.cookie("oauth_state", state, { httpOnly: true });
   res.cookie("oauth_scopes", scopes, { httpOnly: true });
-  if (token_callback)
-    res.cookie("token_callback", token_callback, { httpOnly: true });
+  res.cookie("token_callback", token_callback, { httpOnly: true });
+
   const scopesArray = scopes.toString().split(" ");
   const url = await authInstance.createAuthorizationURL(state, {
     scopes: scopesArray.length ? scopesArray : undefined,

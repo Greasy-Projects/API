@@ -15,6 +15,16 @@ const createdUpdated = {
     .notNull()
     .$defaultFn(() => new Date()),
 };
+//TODO:
+// export enum UserTypes {
+//   User = "user",
+//   Streamer = "streamer",
+//   Developer = "developer",
+// }
+// const userTypeValues: [string, ...string[]] = Object.values(UserTypes) as [
+//   string,
+//   ...string[]
+// ];
 
 export const users = mysqlTable("users", {
   id: varchar("id", {
@@ -95,8 +105,8 @@ export const sessions = mysqlTable("sessions", {
 //         length: 100,
 //       }).notNull(),
 //     message: text("message"),
- 
-//     tags: 
+
+//     tags:
 //   },
 //   (table) => {
 //   return {

@@ -12,6 +12,7 @@ const UserType = g.type("User", {
   accountId: g.id(),
   platform: g.string(),
   displayName: g.string(),
+  role: g.string(),
   avatar: g.string().optional(),
   email: g.string().optional(),
   scope: g.string(),

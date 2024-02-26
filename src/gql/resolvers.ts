@@ -18,28 +18,23 @@ export const resolvers: Resolvers = {
     me: async (_, __, { request }) => {
       let data = await verifyAuth(request);
 
-      const [user] = await db
-        .selectDistinct()
-        .from(schema.users)
-        .where(eq(schema.users.id, data.u));
       const [account] = await db
         .selectDistinct()
         .from(schema.accounts)
-        .where(eq(schema.accounts.id, user.primaryAccountId));
+        .where(eq(schema.accounts.id, data.user.primaryAccountId));
       return {
-        userId: user.id,
+        userId: data.user.id,
         accountId: account.id,
         platform: account.platform,
         displayName: account.displayName,
         scope: account.scope,
         email: account.email,
         avatar: account.avatar,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
+        createdAt: data.user.createdAt,
+        updatedAt: data.user.updatedAt,
+        role: String(data.user.userType),
       };
     },
   },
-  Mutation: {
-    
-  },
+  Mutation: {},
 };
