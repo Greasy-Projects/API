@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development tsx watch src/main.ts",
+    "dev": "cross-env NODE_ENV=development tsx watch src/main.ts --host 127.0.0.1",
     "start": "tsx src/main.ts",
     "generate": "drizzle-kit generate:mysql --out ./drizzle/migrations --breakpoints --schema src/db/schema.ts",
     "studio": "drizzle-kit studio --port 3333",
