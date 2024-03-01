@@ -113,15 +113,16 @@ app.get("/token/validate", async (req, res) => {
     res.status(401).send((e as Error).message);
   }
 });
-const port = process.env.PORT || 4000
+const port = process.env.PORT || 4000;
 app.listen(port, () => {
   console.log(`Running at ${process.env.BASE_URL}`);
 });
 
 async function handleAuthCallback(req: Request, res: Response) {
   const redirectPath = req.cookies.redirect_path ?? "/";
-  const callbackURL =
-    req.cookies.token_callback?.toString() ?? process.env.CALLBACK_URL;
+  // const callbackURL =
+  //   req.cookies.token_callback?.toString() ?? process.env.CALLBACK_URL;
+  const callbackURL = process.env.CALLBACK_URL ?? "";
   const error = req.query.error?.toString() ?? null;
   let url = new URL(callbackURL);
   url.searchParams.set("redirect", redirectPath);
