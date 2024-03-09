@@ -1,4 +1,4 @@
-import express, { response } from "express";
+import express from "express";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import "dotenv/config";
@@ -18,7 +18,7 @@ import { OAuth2RequestError, generateState } from "oslo/oauth2";
 import { db, schema } from "./db";
 import type { Request, Response } from "express";
 import { and, desc, eq, gte, lte } from "drizzle-orm";
-import { createJWT, validateJWT } from "oslo/jwt";
+import { createJWT } from "oslo/jwt";
 import { createId } from "@paralleldrive/cuid2";
 import { TimeSpan } from "oslo";
 const app = express();
@@ -130,7 +130,6 @@ async function handleAuthCallback(req: Request, res: Response) {
 
   const code = req.query.code?.toString() ?? null;
   const state = req.query.state?.toString() ?? null;
-  const scope = req.query.scope?.toString() ?? null;
   const platform = req.query.platform?.toString() ?? null;
   const storedState = req.cookies.oauth_state ?? null;
   const storedScopes = req.cookies.oauth_scopes ?? null;
@@ -200,7 +199,7 @@ async function handleAuthCallback(req: Request, res: Response) {
       .from(schema.accounts)
       .where(eq(schema.accounts.id, user.id));
 
-    let userId;
+    let userId!: string;
     const [emailMatch] = await db
       .select()
       .from(schema.accounts)
@@ -208,36 +207,41 @@ async function handleAuthCallback(req: Request, res: Response) {
       .limit(1);
 
     if (!existingAccount) {
-      if (emailMatch) {
-        userId = emailMatch.userId;
-      } else {
-        // If there is no existing user to link the account to, we create a new user.
-        // We only allow user creation with twitch accounts, discord accounts can be linked later on
-        if (platform === "discord")
-          // TODO: redirect to linking page
+      await db.transaction(async (transaction) => {
+        // Check if user exists by email, else create a new user
+        if (emailMatch && emailMatch.userId) {
+          userId = emailMatch.userId;
+        } else if (platform === "discord") {
+          // Redirect to linking page or another appropriate action
           return res.status(403).send("Discord accounts can only be linked.");
-        userId = createId();
-        await db
-          .insert(schema.users)
-          .values({
+        }
+
+        // Insert the account and link it to the existing or new user
+        await transaction.insert(schema.accounts).values({
+          ...user,
+          platform,
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          expiresAt: tokens.accessTokenExpiresAt,
+          scope: storedScopes,
+          userId,
+        });
+
+        // Update the user with the primaryAccountId obtained from the inserted account
+        if (!userId) {
+          userId = createId();
+          await transaction.insert(schema.users).values({
             id: userId,
             primaryAccountId: user.id,
-          })
-          .then();
-      }
-      // If the account does not yet exist we insert it into the database
-      // Either linking it to an existing user or the user we just created
-      await db.insert(schema.accounts).values({
-        ...user,
-        platform,
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-        expiresAt: tokens.accessTokenExpiresAt,
-        scope: storedScopes,
-        userId: userId,
+          });
+          await transaction
+            .update(schema.accounts)
+            .set({ userId })
+            .where(eq(schema.accounts.id, user.id));
+        }
       });
       // If account already exists we simply create a token for the user linked to that account
-    } else userId = existingAccount.userId;
+    } else userId = existingAccount.userId!;
 
     // Check if there is an existing and valid token for the user
     // This ensures we don't flood the database with tokens, and have 2 at max per user

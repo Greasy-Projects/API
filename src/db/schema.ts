@@ -4,8 +4,13 @@ import {
   text,
   datetime,
   mysqlEnum,
+  AnyMySqlColumn,
 } from "drizzle-orm/mysql-core";
 import { createId } from "@paralleldrive/cuid2";
+
+const lengthOf = {
+  id: 100,
+};
 
 const createdUpdated = {
   createdAt: datetime("created_at")
@@ -18,7 +23,7 @@ const createdUpdated = {
 
 export const users = mysqlTable("users", {
   id: varchar("id", {
-    length: 100,
+    length: lengthOf.id,
   })
     .primaryKey()
     .$defaultFn(() => createId()),
@@ -26,16 +31,20 @@ export const users = mysqlTable("users", {
     "user"
   ),
   primaryAccountId: varchar("primary_account_id", {
-    length: 100,
+    length: lengthOf.id,
   })
     .notNull()
-    .unique(),
+    .unique()
+    .references(() => accounts.id, {
+      onDelete: "cascade",
+      onUpdate: "restrict",
+    }),
   ...createdUpdated,
 });
 
 export const accounts = mysqlTable("user_accounts", {
   id: varchar("id", {
-    length: 100,
+    length: lengthOf.id,
   }).primaryKey(),
   username: text("username").notNull(),
   displayName: text("display_name").notNull(),
@@ -44,10 +53,11 @@ export const accounts = mysqlTable("user_accounts", {
   }),
   avatar: varchar("avatar", { length: 255 }),
   userId: varchar("user_id", {
-    length: 100,
-  })
-    .notNull()
-    .references(() => users.id),
+    length: lengthOf.id,
+  }).references((): AnyMySqlColumn => users.id, {
+    onDelete: "cascade",
+    onUpdate: "restrict",
+  }),
   platform: mysqlEnum("platform", ["twitch", "discord"]).notNull(),
   scope: varchar("scope", {
     length: 255,
@@ -61,16 +71,17 @@ export const accounts = mysqlTable("user_accounts", {
   expiresAt: datetime("expires_at").notNull(),
   ...createdUpdated,
 });
-
 export const sessions = mysqlTable("sessions", {
   id: varchar("id", {
-    length: 100,
+    length: lengthOf.id,
   })
     .primaryKey()
     .$defaultFn(() => createId()),
   userId: varchar("user_id", {
-    length: 100,
-  }).notNull(),
+    length: lengthOf.id,
+  })
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   token: varchar("token", {
     length: 255,
   })
@@ -95,8 +106,8 @@ export const sessions = mysqlTable("sessions", {
 //         length: 100,
 //       }).notNull(),
 //     message: text("message"),
- 
-//     tags: 
+
+//     tags:
 //   },
 //   (table) => {
 //   return {
