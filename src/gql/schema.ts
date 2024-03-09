@@ -1,6 +1,4 @@
-import { GarphSchema } from "garph";
-
-export const g = new GarphSchema();
+import { g } from "garph";
 
 const dateType = g.scalarType<Date, number>("Date", {
   serialize: (value) => value.getTime(),
@@ -20,8 +18,9 @@ const UserType = g.type("User", {
 });
 
 export const queryType = g.type("Query", {
-  hello: g.string().description("Hello World"),
+  content: g.string().args({ path: g.string() }),
   me: g.ref(UserType).description("Get logged in user."),
 });
 
 export const mutationType = g.type("Mutation", {});
+export { g };
