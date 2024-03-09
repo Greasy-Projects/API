@@ -11,7 +11,6 @@ export const contentQuery: Resolvers["Query"] = {
   content: async (_, { path }) => {
     try {
       const cachedContent: string | undefined = cache.get(`content:${path}`);
-      console.log("cache", cachedContent);
       if (cachedContent) {
         const cachedTime: number | undefined = cache.get(
           `content:${path}:time`
@@ -58,7 +57,6 @@ export const contentMutation: Resolvers["Mutation"] = {
   tempContent: async (_, { path, content }, { request }) => {
     await verifyAuth(request, UserType.Editor);
 
-    console.log(path, content);
     cache.set(`content:${path}`, content, 300);
     cache.set(`content:${path}:time`, Date.now());
     return { status: 200, message: "Temporary Content Updated Successfully" };
@@ -109,7 +107,6 @@ export const contentMutation: Resolvers["Mutation"] = {
         },
       });
     } catch (e) {
-      console.log(e);
       return { status: 500, message: "Something went wrong." };
     }
     try {
@@ -129,7 +126,6 @@ const fetchAndUpdateCache = async (path: string) => {
     );
 
     const jsonContent = JSON.stringify(response.data);
-    console.log("content", jsonContent);
     // Update the cache
     cache.set(`content:${path}`, jsonContent, 3600);
     cache.set(`content:${path}:time`, Date.now());
