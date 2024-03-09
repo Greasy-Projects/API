@@ -5,6 +5,7 @@ import { schema, db } from "./db";
 import { secret } from "./main";
 import { and, eq } from "drizzle-orm";
 import { GraphQLError } from "graphql";
+import { UserType } from "./db/schema";
 
 const discordAuthorizeEndpoint = "https://discord.com/oauth2/authorize";
 const discordTokenEndpoint = "https://discord.com/api/oauth2/token";
@@ -148,7 +149,7 @@ export interface AuthProvider {
 }
 
 type payload = { u: string; a: string };
-export async function verifyAuth(request: Request | string): Promise<payload> {
+export async function verifyAuth(request: Request | string, role: UserType) {
   let token: string;
   if (typeof request !== "string") {
     const header = request.headers.get("authorization");
@@ -175,6 +176,26 @@ export async function verifyAuth(request: Request | string): Promise<payload> {
 
   if (!payload.a || !payload.u) throw new GraphQLError("Invalid token payload");
 
+  const [user] = await db
+    .selectDistinct()
+    .from(schema.users)
+    .where(and(eq(schema.users.id, payload.u)));
+
+  if (role && user.userType) {
+    if (getEnumIndex(user.userType) < getEnumIndex(role))
+      throw new GraphQLError("Insufficient Perms");
+  }
+
+  const [account] = await db
+    .selectDistinct()
+    .from(schema.accounts)
+    .where(
+      and(
+        eq(schema.accounts.userId, payload.u),
+        eq(schema.accounts.id, payload.a)
+      )
+    );
+
   const [session] = await db
     .selectDistinct()
     .from(schema.sessions)
@@ -187,5 +208,9 @@ export async function verifyAuth(request: Request | string): Promise<payload> {
 
   if (!session) throw new GraphQLError("Invalid session");
 
-  return payload;
+  return { user, account, payload };
+}
+export function getEnumIndex(enumValue: UserType): number {
+  const enumValues = Object.values(UserType);
+  return enumValues.indexOf(enumValue);
 }

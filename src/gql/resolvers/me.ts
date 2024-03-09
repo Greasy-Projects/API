@@ -2,21 +2,14 @@ import { db, schema } from "../../db";
 import { eq } from "drizzle-orm";
 import { verifyAuth } from "../../auth";
 import { type Resolvers } from "./";
+import { UserType } from "../../db/schema";
 
 const meResolver: Resolvers["Query"] = {
   me: async (_, __, { request }) => {
-    let data = await verifyAuth(request);
+    let { user, account } = await verifyAuth(request, UserType.User);
 
-    const [user] = await db
-      .selectDistinct()
-      .from(schema.users)
-      .where(eq(schema.users.id, data.u));
-    const [account] = await db
-      .selectDistinct()
-      .from(schema.accounts)
-      .where(eq(schema.accounts.id, user.primaryAccountId));
     return {
-      userId: user.id,
+      userId: user.id!,
       accountId: account.id,
       platform: account.platform,
       displayName: account.displayName,

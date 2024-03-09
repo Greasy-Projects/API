@@ -21,6 +21,7 @@ import { and, desc, eq, gte, lte } from "drizzle-orm";
 import { createJWT } from "oslo/jwt";
 import { createId } from "@paralleldrive/cuid2";
 import { TimeSpan } from "oslo";
+import { UserType } from "./db/schema";
 const app = express();
 app.use(cookieParser());
 const yoga = createYoga({ schema: gql });
@@ -107,7 +108,7 @@ app.get("/token/validate", async (req, res) => {
   if (!token) return res.send(400);
 
   try {
-    await verifyAuth(token);
+    await verifyAuth(token, UserType.User);
     res.send(200);
   } catch (e) {
     res.status(401).send((e as Error).message);

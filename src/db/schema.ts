@@ -20,16 +20,24 @@ const createdUpdated = {
     .notNull()
     .$defaultFn(() => new Date()),
 };
-
+export enum UserType {
+  User = "user",
+  Editor = "editor",
+  Streamer = "streamer",
+  Developer = "developer",
+}
 export const users = mysqlTable("users", {
   id: varchar("id", {
     length: lengthOf.id,
   })
     .primaryKey()
     .$defaultFn(() => createId()),
-  userType: mysqlEnum("user_type", ["user", "streamer", "developer"]).default(
-    "user"
-  ),
+  userType: mysqlEnum("user_type", [
+    UserType.User,
+    UserType.Editor,
+    UserType.Streamer,
+    UserType.Developer,
+  ]).default(UserType.User),
   primaryAccountId: varchar("primary_account_id", {
     length: lengthOf.id,
   })

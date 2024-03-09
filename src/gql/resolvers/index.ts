@@ -1,5 +1,5 @@
 import { mutationType, queryType } from "../schema";
-import content from "./content";
+import { contentQuery, contentMutation } from "./content";
 import me from "./me";
 import { InferResolvers } from "garph";
 import { YogaInitialContext } from "graphql-yoga";
@@ -12,9 +12,11 @@ export const cache = new NodeCache();
 
 export const resolvers = {
   Query: {
-    ...content,
+    ...contentQuery,
     ...me,
   },
 
-  Mutation: {},
+  Mutation: {
+    ...contentMutation,
+  },
 };

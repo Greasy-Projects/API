@@ -5,6 +5,11 @@ const dateType = g.scalarType<Date, number>("Date", {
   parseValue: (value) => new Date(value),
 });
 
+const ResponseType = g.type("Response", {
+  status: g.int(),
+  message: g.string(),
+});
+
 const UserType = g.type("User", {
   userId: g.id(),
   accountId: g.id(),
@@ -18,9 +23,19 @@ const UserType = g.type("User", {
 });
 
 export const queryType = g.type("Query", {
-  content: g.string().args({ path: g.string() }),
+  content: g.string().args({
+    path: g.string(),
+  }),
   me: g.ref(UserType).description("Get logged in user."),
 });
 
-export const mutationType = g.type("Mutation", {});
+export const mutationType = g.type("Mutation", {
+  invalidateContent: g.ref(ResponseType).args({ path: g.string() }),
+  tempContent: g
+    .ref(ResponseType)
+    .args({ path: g.string(), content: g.string() }),
+  setContent: g
+    .ref(ResponseType)
+    .args({ path: g.string(), content: g.string() }),
+});
 export { g };
