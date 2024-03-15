@@ -4,19 +4,19 @@ import me from "./me";
 import { InferResolvers } from "garph";
 import { YogaInitialContext } from "graphql-yoga";
 export type Resolvers = InferResolvers<
-  { Query: typeof queryType; Mutation: typeof mutationType },
-  { context: YogaInitialContext }
+	{ Query: typeof queryType; Mutation: typeof mutationType },
+	{ context: YogaInitialContext }
 >;
 import NodeCache from "node-cache";
 export const cache = new NodeCache();
 
 export const resolvers = {
-  Query: {
-    ...contentQuery,
-    ...me,
-  },
+	Query: {
+		...contentQuery,
+		...me,
+	},
 
-  Mutation: {
-    ...contentMutation,
-  },
+	Mutation: {
+		...contentMutation,
+	},
 };
