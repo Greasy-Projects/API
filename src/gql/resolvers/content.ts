@@ -109,11 +109,8 @@ export const contentMutation: Resolvers["Mutation"] = {
     } catch (e) {
       return { status: 500, message: "Something went wrong." };
     }
-    try {
-      await fetchAndUpdateCache(path);
-    } catch {
-      return { status: 202, message: "Content Set, Failed to Refresh" };
-    }
+    cache.set(`content:${path}`, content, 3600);
+    cache.set(`content:${path}:time`, Date.now());
     return { status: 200, message: "Content Set Successfully" };
   },
 };
