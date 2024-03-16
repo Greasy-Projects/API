@@ -22,9 +22,13 @@ import { createJWT } from "oslo/jwt";
 import { createId } from "@paralleldrive/cuid2";
 import { TimeSpan } from "oslo";
 import axios from "axios";
+import { slowDownLimiter, rateLimiterMiddleware } from "./ratelimit";
 import { cleanFilePath } from "./util";
 const app = express();
 app.use(cookieParser());
+app.use(slowDownLimiter);
+app.use(rateLimiterMiddleware);
+
 const yoga = createYoga({ schema: gql });
 const yogaRouter = express.Router();
 function checkEnvVars(envVars: string[]): void {
@@ -76,7 +80,6 @@ yogaRouter.use(
 );
 yogaRouter.use(yoga);
 app.use(yoga.graphqlEndpoint, yogaRouter);
-
 // Add the global CSP configuration for the rest of your server.
 // app.use(helmet());
 
