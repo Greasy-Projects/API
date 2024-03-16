@@ -1,0 +1,13 @@
+{
+    "version": "5",
+    "dialect": "mysql",
+    "entries": [
+        {
+            "idx": 1,
+            "version": "5",
+            "when": 1710590750600,
+            "tag": "0001_spooky_preak",
+            "breakpoints": true
+        }
+    ]
+}
