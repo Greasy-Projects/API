@@ -55,6 +55,9 @@ try {
 		"JWT_SECRET",
 		"CALLBACK_URL",
 		"BASE_URL",
+		"GITHUB_TOKEN",
+		"GITHUB_OWNER",
+		"GITHUB_REPO",
 		"TWITCH_CLIENT_ID",
 		"TWITCH_CLIENT_SECRET",
 		"DISCORD_CLIENT_ID",
@@ -105,8 +108,7 @@ app.get("/image/:imagePath(*)", async (req, res) => {
 		res.setHeader("Content-Type", "image/png");
 		res.send(data);
 	} catch (error) {
-		console.error("Error fetching image:", error);
-		res.status(500).send("Internal Server Error");
+		res.status(404);
 	}
 });
 
