@@ -24,13 +24,17 @@ import { TimeSpan } from "oslo";
 import axios from "axios";
 import { slowDownLimiter, rateLimiterMiddleware } from "./ratelimit";
 import { cleanFilePath } from "./util";
+import fs from "fs";
+
 const app = express();
+
 app.use(cookieParser());
 app.use(slowDownLimiter);
 app.use(rateLimiterMiddleware);
 
 const yoga = createYoga({ schema: gql });
 const yogaRouter = express.Router();
+
 function checkEnvVars(envVars: string[]): void {
 	const undefinedVars: string[] = [];
 	envVars.forEach(envVar => {
@@ -81,36 +85,11 @@ yogaRouter.use(
 		},
 	})
 );
+
 yogaRouter.use(yoga);
 app.use(yoga.graphqlEndpoint, yogaRouter);
 // Add the global CSP configuration for the rest of your server.
 // app.use(helmet());
-
-app.get("/image/:imagePath(*)", async (req, res) => {
-	try {
-		const { imagePath } = req.params;
-		const authToken = process.env.GITHUB_TOKEN;
-		const repoOwner = process.env.GITHUB_OWNER;
-		const repoName = process.env.GITHUB_REPO;
-
-		const { data } = await axios.get(
-			`https://raw.githubusercontent.com/${repoOwner}/${repoName}/${cleanFilePath(
-				imagePath
-			)}`,
-			{
-				headers: {
-					Authorization: `token ${authToken}`,
-				},
-				responseType: "arraybuffer",
-			}
-		);
-		res.setHeader("Cache-Control", "max-age=43200");
-		res.setHeader("Content-Type", "image/png");
-		res.send(data);
-	} catch (error) {
-		res.status(404);
-	}
-});
 
 const discordAuth = new Auth(
 	AuthPlatform.Discord,
@@ -118,12 +97,21 @@ const discordAuth = new Auth(
 	process.env.DISCORD_CLIENT_SECRET!,
 	process.env.BASE_URL + "/login/callback?platform=discord"
 );
+
 const twitchAuth = new Auth(
 	AuthPlatform.Twitch,
 	process.env.TWITCH_CLIENT_ID!,
 	process.env.TWITCH_CLIENT_SECRET!,
 	process.env.BASE_URL + "/login/callback?platform=twitch"
 );
+
+fs.readdirSync("./src/routes").forEach(file => {
+	if (file.endsWith(".ts")) {
+		const route = require(`./routes/${file}`).default;
+		app.use(route);
+		console.log(`Loaded route: ${file}`);
+	}
+});
 
 app.get("/login/twitch", async (req: Request, res: Response) => {
 	await handleAuth(req, res, twitchAuth);
@@ -148,6 +136,7 @@ app.get("/token/validate", async (req, res) => {
 		res.status(401).send((e as Error).message);
 	}
 });
+
 const port = process.env.PORT || 4000;
 app.listen(port, () => {
 	console.log(`Running at ${process.env.BASE_URL}`);
@@ -360,5 +349,6 @@ async function removeExpiredSessions() {
 		console.error("Error removing expired sessions:", error);
 	}
 }
+
 // At 00:00 on Sunday
 new CronJob("0 0 * * 0", removeExpiredSessions).start();
