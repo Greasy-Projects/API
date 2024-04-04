@@ -91,7 +91,6 @@ app.listen(port, () => {
 	console.log(`Running at ${process.env.BASE_URL}`);
 });
 
-
 async function removeExpiredSessions() {
 	try {
 		await db

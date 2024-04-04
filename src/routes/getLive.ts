@@ -26,25 +26,29 @@ router.get("/live", async (req: Request, res: Response) => {
 			},
 		}
 	);
-    console.log(live.data)
+	console.log(live.data);
 
- 	if (live.data?.data[0]?.type === "live") {
+	if (live.data?.data[0]?.type === "live") {
 		// https://dev.twitch.tv/docs/api/reference/#get-chatters
-        // TO-DO: Missing required paramter "moderator_id", access token needs to be a moderator of broadcaster
-		const chatters = await axios.get("https://api.twitch.tv/helix/chat/chatters?broadcaster_id=" + live.data.data[0].user_id, {
-			params: {
-				broadcaster_id: live.data?.data[0].broadcaster_id,
-			},
-			headers: {
-				Authorization: `Bearer ${token.access_token}`,
-				"Client-Id": process.env.TWITCH_CLIENT_ID,
-			},
-		});
+		// TO-DO: Missing required paramter "moderator_id", access token needs to be a moderator of broadcaster
+		const chatters = await axios.get(
+			"https://api.twitch.tv/helix/chat/chatters?broadcaster_id=" +
+				live.data.data[0].user_id,
+			{
+				params: {
+					broadcaster_id: live.data?.data[0].broadcaster_id,
+				},
+				headers: {
+					Authorization: `Bearer ${token.access_token}`,
+					"Client-Id": process.env.TWITCH_CLIENT_ID,
+				},
+			}
+		);
 
 		res.json(chatters.data);
 	}
 
-	res.status(200).json({ });
+	res.status(200).json({});
 });
 
 export default router;
