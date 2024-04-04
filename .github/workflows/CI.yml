@@ -5,9 +5,15 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2.4.0
@@ -23,7 +29,7 @@ jobs:
         run: pnpm install
 
 
-        
+
       - name: Lint
         run: pnpm lint
       - uses: stefanzweifel/git-auto-commit-action@v5
