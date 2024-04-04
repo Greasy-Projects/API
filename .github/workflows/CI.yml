@@ -1,0 +1,31 @@
+name: Lint
+on: [pull_request]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2.4.0
+
+      - name: Install Node v20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+
+
+      - name: Install dependencies
+        run: pnpm install
+
+
+
+      - name: Lint
+        run: |
+          pnpm run lint
+          git diff --exit-code --quiet || { git config user.name "Lint Bot"; git config user.email "lint-bot@verycrunchy.com"; git add .; git commit -m "chore: lint bot"; git push origin $GITHUB_REF; }
