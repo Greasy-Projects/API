@@ -80,14 +80,29 @@ export const sessions = mysqlTable("sessions", {
 	userId: varchar("user_id", {
 		length: lengthOf.id,
 	})
-		.notNull()
-		.references(() => users.id, { onDelete: "cascade" }),
+		.notNull(),
+		// TODO: Fix refrences since being used on both /createCode (as a UUID) and /login routes (as a user_id)
+		//.references(() => users.id, { onDelete: "cascade" }),
 	token: varchar("token", {
 		length: 255,
 	})
 		.notNull()
 		.unique(),
 	expiresAt: datetime("expires_at").notNull(),
+});
+
+export const minecraftUsers = mysqlTable("minecraft_users", {
+	minecraftUuid: varchar("minecraft_uuid", {
+		length: 36,
+	})	
+		.primaryKey()
+		.unique(),
+	userId: varchar("user_id", {
+		length: lengthOf.id,
+	})
+		.notNull()
+		.references(() => users.id, { onDelete: "cascade" }),
+	...createdUpdated,
 });
 
 // // TODO: logs table
