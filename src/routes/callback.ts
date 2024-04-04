@@ -4,8 +4,8 @@ import {
 	DiscordUserResponse,
 	Tokens,
 	TwitchUserResponse,
-    discordAuth,
-    twitchAuth
+	discordAuth,
+	twitchAuth
 } from "../auth";
 import { OAuth2RequestError } from "oslo/oauth2";
 import { db, schema } from "../db";

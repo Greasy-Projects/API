@@ -1,9 +1,5 @@
 import express from "express";
-import {
-	AuthProvider,
-    discordAuth,
-    twitchAuth
-} from "../auth";
+import { AuthProvider, discordAuth, twitchAuth } from "../auth";
 import { generateState } from "oslo/oauth2";
 
 import type { Request, Response } from "express";

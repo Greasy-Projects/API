@@ -77,11 +77,11 @@ app.use(yoga.graphqlEndpoint, yogaRouter);
 // Add the global CSP configuration for the rest of your server.
 // app.use(helmet());
 
-fs.readdirSync("./src/routes").forEach(file => {
+fs.readdirSync("./src/routes").forEach(async file => {
 	if (file.endsWith(".ts")) {
-		const route = require(`./routes/${file}`).default;
-		app.use(route);
-		console.log(`Loaded route: ${file}`);
+		const route = await import(`./routes/${file}`);
+		app.use(route.default);
+		console.log(`Loaded routes/${file}`);
 	}
 });
 
@@ -90,7 +90,6 @@ const port = process.env.PORT || 4000;
 app.listen(port, () => {
 	console.log(`Running at ${process.env.BASE_URL}`);
 });
-
 
 async function removeExpiredSessions() {
 	try {

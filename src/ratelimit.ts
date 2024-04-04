@@ -11,9 +11,9 @@ export const slowDownLimiter = slowDown({
 });
 
 const rateLimiter = new RateLimiterMemory({
-	points: 100, // requests per duration seconds
+	points: 100, // amount of allowed requests per <duration> seconds
 	duration: 5,
-	blockDuration: 5,
+	blockDuration: 10,
 });
 
 export const rateLimiterMiddleware: RequestHandler = (req, res, next) => {
