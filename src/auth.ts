@@ -235,3 +235,17 @@ export async function verifyAuth(request: Request | string, scopes?: Scope[]) {
 
 	return { user, account, payload };
 }
+
+export const discordAuth = new Auth(
+	AuthPlatform.Discord,
+	process.env.DISCORD_CLIENT_ID!,
+	process.env.DISCORD_CLIENT_SECRET!,
+	process.env.BASE_URL + "/login/callback?platform=discord"
+);
+
+export const twitchAuth = new Auth(
+	AuthPlatform.Twitch,
+	process.env.TWITCH_CLIENT_ID!,
+	process.env.TWITCH_CLIENT_SECRET!,
+	process.env.BASE_URL + "/login/callback?platform=twitch"
+);
