@@ -7,10 +7,10 @@ import { verifyAuth } from "../auth";
 const router = express.Router();
 const uuidRegex = new RegExp("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
 
-router.post("/createCode", async (req: Request, res: Response) => {
+router.post("/createWhitelistCode", async (req: Request, res: Response) => {
     //TODO: Add passkey/token so only server can create codes
-
     const { uuid } = req.query;
+    
     if (!uuid) return res.status(400).json({
         error: "UUID is required"
     });
@@ -22,20 +22,27 @@ router.post("/createCode", async (req: Request, res: Response) => {
     // create 6 digit code
     const token = Math.floor(100000 + Math.random() * 900000);
 
-    await db.insert(schema.sessions).values({
-        userId: uuid.toString(),
-        token: token.toString(),
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60) // expires in 1 hour
-    })
-
-    res.json({
-        token,
-        uuid
-    });
+    try {
+        await db.insert(schema.sessions).values({
+            userId: uuid.toString(),
+            token: token.toString(),
+            expiresAt: new Date(Date.now() + 1000 * 60 * 60) // expires in 1 hour
+        })
+    
+        res.json({
+            success: true,
+            token,
+            uuid
+        });
+    } catch (e) {
+        return res.status(500).json({
+            success: false
+        });
+    }
 });
 
 // An endpoint to link the twitch user with the mc user, when the code is provided.
-router.post("/link", async (req: Request, res: Response) => {
+router.post("/linkWhitelist", async (req: Request, res: Response) => {
     const { uuid, code } = req.query;
     const token = req.headers.authorization;
 
@@ -77,7 +84,7 @@ router.post("/link", async (req: Request, res: Response) => {
 });
 
 // And an endpoint to check if a user is linked already or not
-router.get("/check", async (req: Request, res: Response) => {
+router.get("/checkWhitelistById", async (req: Request, res: Response) => {
     const token = req.headers.authorization;
     let id = req.query.id;
 
@@ -99,7 +106,39 @@ router.get("/check", async (req: Request, res: Response) => {
             );
 
         return res.json({
-            linked: !!linkedUser
+            linked: !!linkedUser,
+            uuid: linkedUser?.minecraftUuid
+        });
+    } catch (e) {
+        return res.status(500).json({
+            success: false
+        });
+    }
+});
+
+router.get("/checkWhitelistByUuid", async (req: Request, res: Response) => {
+    let { uuid } = req.query;
+
+    try {
+        if(!uuid) return res.status(400).json({
+            error: "UUID is required"
+        });
+
+        if (!uuidRegex.test(uuid.toString())) return res.status(400).json({
+            error: "Invalid UUID"
+        });
+
+        const [linkedUser] = await db
+            .select()
+            .from(schema.minecraftUsers)
+            .where(
+                eq(schema.minecraftUsers.minecraftUuid, uuid.toString())
+            );
+
+        return res.json({
+            success: true,
+            linked: !!linkedUser,
+            userId: linkedUser?.userId
         });
     } catch (e) {
         return res.status(500).json({
