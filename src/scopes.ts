@@ -1,5 +1,7 @@
 export enum Scope {
 	EditContent = "content:edit",
+	ReadWhitelist = "whitelist:read",
+	ManageWhitelist = "whitelist:manage",
 }
 export const ScopeGroup: { [key: string]: Scope[] } = {
 	default: [],
