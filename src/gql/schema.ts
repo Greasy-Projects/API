@@ -27,6 +27,11 @@ export const queryType = g.type("Query", {
 		path: g.string(),
 	}),
 	me: g.ref(UserType).description("Get logged in user."),
+
+	checkWhitelist: g.boolean(),
+	checkWhitelistByUUID: g.boolean().args({
+		uuid: g.string(),
+	}),
 });
 
 export const mutationType = g.type("Mutation", {
@@ -37,5 +42,8 @@ export const mutationType = g.type("Mutation", {
 	setContent: g
 		.ref(ResponseType)
 		.args({ path: g.string(), content: g.string() }),
+
+	whitelistCode: g.string().args({ uuid: g.string() }),
+	whitelistLink: g.ref(ResponseType).args({ code: g.int() }),
 });
 export { g };

@@ -5,6 +5,7 @@ import {
 	datetime,
 	mysqlEnum,
 	AnyMySqlColumn,
+	boolean,
 } from "drizzle-orm/mysql-core";
 import { createId } from "@paralleldrive/cuid2";
 
@@ -82,6 +83,7 @@ export const minecraftUsers = mysqlTable("minecraft_users", {
 	})
 		.notNull()
 		.references(() => users.id, { onDelete: "cascade" }),
+	whitelisted: boolean("whitelisted").default(true),
 	...createdUpdated,
 });
 export const sessions = mysqlTable("sessions", {

@@ -8,13 +8,11 @@ import {
 	twitchAuth,
 } from "../auth";
 import { OAuth2RequestError } from "oslo/oauth2";
-import { db, schema } from "../db";
+import { db, schema, secret } from "../db";
 import { and, desc, eq, gte } from "drizzle-orm";
 import { createJWT } from "oslo/jwt";
 import { createId } from "@paralleldrive/cuid2";
 import { TimeSpan } from "oslo";
-import { secret } from "../main";
-
 import type { Request, Response } from "express";
 
 const router = express.Router();
