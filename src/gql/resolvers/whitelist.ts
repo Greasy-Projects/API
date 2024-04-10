@@ -63,6 +63,6 @@ export const whitelistMutation: Resolvers["Mutation"] = {
 			id: uuid,
 			userId: data.user.id,
 		});
-		return { status: 200, message: "Linked account successfully" };
+		return { status: 200, message: "You have been whitelisted!" };
 	},
 };
