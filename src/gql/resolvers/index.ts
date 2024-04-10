@@ -1,5 +1,6 @@
 import { mutationType, queryType } from "../schema";
 import { contentQuery, contentMutation } from "./content";
+import { whitelistQuery, whitelistMutation } from "./whitelist";
 import me from "./me";
 import { InferResolvers } from "garph";
 import { YogaInitialContext } from "graphql-yoga";
@@ -14,9 +15,11 @@ export const resolvers = {
 	Query: {
 		...contentQuery,
 		...me,
+		...whitelistQuery,
 	},
 
 	Mutation: {
 		...contentMutation,
+		...whitelistMutation,
 	},
 };

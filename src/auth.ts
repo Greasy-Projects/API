@@ -1,8 +1,7 @@
 import { OAuth2Client } from "oslo/oauth2";
 import { TimeSpan, createDate } from "oslo";
 import { validateJWT } from "oslo/jwt";
-import { schema, db } from "./db";
-import { secret } from "./main";
+import { schema, db, secret } from "./db";
 import { and, eq } from "drizzle-orm";
 import { GraphQLError } from "graphql";
 import { ScopeGroup, Scope } from "./scopes";
@@ -185,9 +184,9 @@ export async function verifyAuth(request: Request | string, scopes?: Scope[]) {
 	if (scopes) {
 		const userScopes: string[] | undefined = user.scope?.split(" ");
 		const hasScopes: string[] = [];
-
 		// Check scopes from user's group
 		if (userScopes) {
+			hasScopes.push(...userScopes);
 			for (const scope of userScopes) {
 				if (scope.startsWith("group:")) {
 					const groupName = scope.replace("group:", "");

@@ -5,6 +5,7 @@ import {
 	datetime,
 	mysqlEnum,
 	AnyMySqlColumn,
+	boolean,
 } from "drizzle-orm/mysql-core";
 import { createId } from "@paralleldrive/cuid2";
 
@@ -69,6 +70,20 @@ export const accounts = mysqlTable("user_accounts", {
 		length: 100,
 	}),
 	expiresAt: datetime("expires_at").notNull(),
+	...createdUpdated,
+});
+export const minecraftUsers = mysqlTable("minecraft_users", {
+	id: varchar("id", {
+		length: 36,
+	})
+		.primaryKey()
+		.unique(),
+	userId: varchar("user_id", {
+		length: lengthOf.id,
+	})
+		.notNull()
+		.references(() => users.id, { onDelete: "cascade" }),
+	whitelisted: boolean("whitelisted").default(true),
 	...createdUpdated,
 });
 export const sessions = mysqlTable("sessions", {
