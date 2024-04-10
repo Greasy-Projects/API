@@ -50,7 +50,9 @@ export default async function createWhitelistUser() {
 			issuer: "greasygang-api",
 			includeIssuedTimestamp: true,
 		});
-		await transaction.delete(schema.sessions).where(eq(schema.sessions.userId, id));
+		await transaction
+			.delete(schema.sessions)
+			.where(eq(schema.sessions.userId, id));
 		await transaction
 			.insert(schema.sessions)
 			.values({
