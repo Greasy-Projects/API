@@ -58,8 +58,6 @@ try {
 	process.exit(1);
 }
 
-export const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-
 yogaRouter.use(
 	helmet({
 		contentSecurityPolicy: {
