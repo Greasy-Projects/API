@@ -10,13 +10,10 @@ import { lte } from "drizzle-orm";
 
 import { schema as gql } from "./gql";
 import { db, schema } from "./db";
-import { slowDownLimiter, rateLimiterMiddleware } from "./ratelimit";
 
 const app = express();
 
 app.use(cookieParser());
-app.use(slowDownLimiter);
-app.use(rateLimiterMiddleware);
 
 const yoga = createYoga({ schema: gql });
 const yogaRouter = express.Router();
