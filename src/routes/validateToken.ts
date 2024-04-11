@@ -9,7 +9,7 @@ router.get("/token/validate", async (req, res) => {
 
 	try {
 		await verifyAuth(token);
-		res.send(200);
+		res.status(200);
 	} catch (e) {
 		res.status(401).send((e as Error).message);
 	}
