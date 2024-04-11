@@ -7,6 +7,7 @@ module.exports = {
 			script: "pnpm",
 			args: "start",
 			autorestart: true,
+			time: true,
 			env: {
 				NODE_ENV: "production",
 			},

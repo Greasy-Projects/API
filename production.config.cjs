@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-undef
 module.exports = {
 	apps: [
 		{
@@ -6,6 +7,7 @@ module.exports = {
 			script: "pnpm",
 			args: "start",
 			autorestart: true,
+			time: true,
 			env: {
 				NODE_ENV: "production",
 			},
