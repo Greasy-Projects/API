@@ -1,3 +1,4 @@
+import env from "~/env";
 import express from "express";
 import axios from "axios";
 import { cleanFilePath } from "../util";
@@ -9,9 +10,9 @@ const router = express.Router();
 router.get("/image/:imagePath(*)", async (req: Request, res: Response) => {
 	try {
 		const { imagePath } = req.params;
-		const authToken = process.env.GITHUB_TOKEN;
-		const repoOwner = process.env.GITHUB_OWNER;
-		const repoName = process.env.GITHUB_REPO;
+		const authToken = env.GITHUB_TOKEN;
+		const repoOwner = env.GITHUB_OWNER;
+		const repoName = env.GITHUB_REPO;
 
 		const { data } = await axios.get(
 			`https://raw.githubusercontent.com/${repoOwner}/${repoName}/${cleanFilePath(

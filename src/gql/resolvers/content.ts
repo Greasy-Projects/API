@@ -1,3 +1,4 @@
+import env from "~/env";
 import { GraphQLError } from "graphql";
 import axios from "axios";
 import { type Resolvers, cache } from "./";
@@ -5,9 +6,9 @@ import { verifyAuth } from "../../auth";
 import { Scope } from "../../scopes";
 import { cleanFilePath } from "../../util";
 
-const authToken = process.env.GITHUB_TOKEN;
-const repoOwner = process.env.GITHUB_OWNER;
-const repoName = process.env.GITHUB_REPO;
+const authToken = env.GITHUB_TOKEN;
+const repoOwner = env.GITHUB_OWNER;
+const repoName = env.GITHUB_REPO;
 const gitContentURL = (filePath: string) =>
 	`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
 
@@ -107,7 +108,7 @@ export const contentMutation: Resolvers["Mutation"] = {
 		return { status: 200, message: "Content Set Successfully" };
 	},
 };
-// const branch = process.env.CONTENT_BRANCH ?? "main";
+// const branch = env.CONTENT_BRANCH ?? "main";
 const fetchAndUpdateCache = async (path: string) => {
 	try {
 		const content = await fetchContent(path);

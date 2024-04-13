@@ -30,7 +30,8 @@
 		"jsonwebtoken": "^9.0.2",
 		"mysql2": "^3.9.1",
 		"node-cache": "^5.1.2",
-		"oslo": "^1.1.1"
+		"oslo": "^1.1.1",
+		"zod": "^3.22.4"
 	},
 	"devDependencies": {
 		"@types/cookie-parser": "^1.4.6",

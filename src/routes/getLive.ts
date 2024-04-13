@@ -1,3 +1,4 @@
+import env from "~/env";
 import express from "express";
 import axios from "axios";
 
@@ -10,8 +11,8 @@ router.get("/live", async (req: Request, res: Response) => {
 	const token = (
 		await axios.post("https://id.twitch.tv/oauth2/token", null, {
 			params: {
-				client_id: process.env.TWITCH_CLIENT_ID,
-				client_secret: process.env.TWITCH_CLIENT_SECRET,
+				client_id: env.TWITCH_CLIENT_ID,
+				client_secret: env.TWITCH_CLIENT_SECRET,
 				grant_type: "client_credentials",
 			},
 		})
@@ -22,7 +23,7 @@ router.get("/live", async (req: Request, res: Response) => {
 		{
 			headers: {
 				Authorization: `Bearer ${token.access_token}`,
-				"Client-Id": process.env.TWITCH_CLIENT_ID,
+				"Client-Id": env.TWITCH_CLIENT_ID,
 			},
 		}
 	);
@@ -40,7 +41,7 @@ router.get("/live", async (req: Request, res: Response) => {
 				},
 				headers: {
 					Authorization: `Bearer ${token.access_token}`,
-					"Client-Id": process.env.TWITCH_CLIENT_ID,
+					"Client-Id": env.TWITCH_CLIENT_ID,
 				},
 			}
 		);

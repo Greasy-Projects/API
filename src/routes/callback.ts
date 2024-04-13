@@ -1,3 +1,4 @@
+import env from "~/env";
 import express from "express";
 import "dotenv/config";
 import {
@@ -20,8 +21,8 @@ const router = express.Router();
 async function handleAuthCallback(req: Request, res: Response) {
 	const redirectPath = req.cookies.redirect_path ?? "/";
 	// const callbackURL =
-	//   req.cookies.token_callback?.toString() ?? process.env.CALLBACK_URL;
-	const callbackURL = process.env.CALLBACK_URL ?? "";
+	//   req.cookies.token_callback?.toString() ?? env.CALLBACK_URL;
+	const callbackURL = env.CALLBACK_URL;
 	const error = req.query.error?.toString() ?? null;
 	const url = new URL(callbackURL);
 	url.searchParams.set("redirect", redirectPath);
@@ -60,7 +61,7 @@ async function handleAuthCallback(req: Request, res: Response) {
 				{
 					headers: {
 						Authorization: `Bearer ${tokens.accessToken}`,
-						"Client-Id": process.env.TWITCH_CLIENT_ID || "",
+						"Client-Id": env.TWITCH_CLIENT_ID,
 					},
 				}
 			);

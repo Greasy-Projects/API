@@ -1,3 +1,4 @@
+import env from "~/env";
 import { OAuth2Client } from "oslo/oauth2";
 import { TimeSpan, createDate } from "oslo";
 import { validateJWT } from "oslo/jwt";
@@ -237,14 +238,14 @@ export async function verifyAuth(request: Request | string, scopes?: Scope[]) {
 
 export const discordAuth = new Auth(
 	AuthPlatform.Discord,
-	process.env.DISCORD_CLIENT_ID!,
-	process.env.DISCORD_CLIENT_SECRET!,
-	process.env.BASE_URL + "/login/callback?platform=discord"
+	env.DISCORD_CLIENT_ID,
+	env.DISCORD_CLIENT_SECRET,
+	env.BASE_URL + "/login/callback?platform=discord"
 );
 
 export const twitchAuth = new Auth(
 	AuthPlatform.Twitch,
-	process.env.TWITCH_CLIENT_ID!,
-	process.env.TWITCH_CLIENT_SECRET!,
-	process.env.BASE_URL + "/login/callback?platform=twitch"
+	env.TWITCH_CLIENT_ID,
+	env.TWITCH_CLIENT_SECRET,
+	env.BASE_URL + "/login/callback?platform=twitch"
 );

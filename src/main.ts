@@ -1,4 +1,4 @@
-import "dotenv/config";
+import env from "~/env";
 import express from "express";
 import fs from "fs";
 
@@ -17,43 +17,6 @@ app.use(cookieParser());
 
 const yoga = createYoga({ schema: gql });
 const yogaRouter = express.Router();
-
-function checkEnvVars(envVars: string[]): void {
-	const undefinedVars: string[] = [];
-	envVars.forEach(envVar => {
-		if (!process.env[envVar] || process.env[envVar]?.trim() === "") {
-			undefinedVars.push(envVar);
-		}
-	});
-
-	if (undefinedVars.length > 0) {
-		throw new Error(
-			`Missing environment variables: ${undefinedVars.join(", ")}`
-		);
-	}
-}
-
-try {
-	checkEnvVars([
-		"DB_HOST",
-		"DB_USER",
-		"DB_PASS",
-		"DB_NAME",
-		"JWT_SECRET",
-		"CALLBACK_URL",
-		"BASE_URL",
-		"GITHUB_TOKEN",
-		"GITHUB_OWNER",
-		"GITHUB_REPO",
-		"TWITCH_CLIENT_ID",
-		"TWITCH_CLIENT_SECRET",
-		"DISCORD_CLIENT_ID",
-		"DISCORD_CLIENT_SECRET",
-	]);
-} catch (error) {
-	console.error(error);
-	process.exit(1);
-}
 
 yogaRouter.use(
 	helmet({
@@ -80,10 +43,8 @@ fs.readdirSync("./src/routes").forEach(async file => {
 	}
 });
 
-const port = process.env.PORT || 4000;
-
-app.listen(port, () => {
-	console.log(`Running at ${process.env.BASE_URL}`);
+app.listen(env.PORT, () => {
+	console.log(`Running at http://localhost:${env.PORT}`);
 });
 
 async function removeExpiredSessions() {
