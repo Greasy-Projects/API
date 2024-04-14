@@ -3,7 +3,7 @@ module.exports = {
 	apps: [
 		{
 			name: "GreasyGang Beta API",
-			port: 5011,
+			port: "5011",
 			script: "pnpm",
 			args: "start",
 			autorestart: true,
