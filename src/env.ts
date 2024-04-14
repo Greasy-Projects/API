@@ -31,7 +31,7 @@ const envSchema = z.object({
 	DISCORD_CLIENT_ID: z.string().regex(/^[0-9]*$/),
 	DISCORD_CLIENT_SECRET: z.string(),
 	NODE_ENV: z.enum(["development", "production"]).default("development"),
-	PORT: z.number().default(4000),
+	PORT: z.string().default("4000"),
 });
 
 export const env = envSchema.parse(process.env);
