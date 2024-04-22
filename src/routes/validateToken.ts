@@ -5,13 +5,12 @@ export const router = Router();
 
 router.get("/token/validate", async (req, res) => {
 	const token = req.headers.authorization;
-	if (!token) return res.send(400);
-
+	if (!token) return res.sendStatus(400);
 	try {
 		await verifyAuth(token);
-		res.status(200);
+		res.sendStatus(200);
 	} catch (e) {
-		res.status(401).send((e as Error).message);
+		res.sendStatus(401);
 	}
 });
 
