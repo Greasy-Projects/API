@@ -146,20 +146,17 @@ router.get("/login/callback", async (req: Request, res: Response) => {
 					refreshToken: tokens.refreshToken,
 					expiresAt: tokens.accessTokenExpiresAt,
 					scope: storedScopes,
-					userId,
 				});
 
 				// Update the user with the primaryAccountId obtained from the inserted account
-				if (!userId) {
-					await transaction.insert(schema.users).values({
-						id: userId,
-						primaryAccountId: user.id,
-					});
-					await transaction
-						.update(schema.accounts)
-						.set({ userId })
-						.where(eq(schema.accounts.id, user.id));
-				}
+				await transaction.insert(schema.users).values({
+					id: userId,
+					primaryAccountId: user.id,
+				});
+				await transaction
+					.update(schema.accounts)
+					.set({ userId })
+					.where(eq(schema.accounts.id, user.id));
 			});
 			// If account already exists we simply create a token for the user linked to that account
 		} else {
