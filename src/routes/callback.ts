@@ -15,10 +15,10 @@ import { createJWT } from "oslo/jwt";
 import { createId } from "@paralleldrive/cuid2";
 import { TimeSpan } from "oslo";
 import type { Request, Response } from "express";
-
+import { hasAllItems } from "~/util";
 const router = express.Router();
 
-async function handleAuthCallback(req: Request, res: Response) {
+router.get("/login/callback", async (req: Request, res: Response) => {
 	const redirectPath = req.cookies.redirect_path ?? "/";
 	// const callbackURL =
 	//   req.cookies.token_callback?.toString() ?? env.CALLBACK_URL;
@@ -32,7 +32,7 @@ async function handleAuthCallback(req: Request, res: Response) {
 	const state = req.query.state?.toString() ?? null;
 	const platform = req.query.platform?.toString() ?? null;
 	const storedState = req.cookies.oauth_state ?? null;
-	const storedScopes = req.cookies.oauth_scopes ?? null;
+	const storedScopes: string = req.cookies.oauth_scopes ?? null;
 	if (
 		!platform ||
 		!(platform === "twitch" || platform === "discord") ||
@@ -47,10 +47,11 @@ async function handleAuthCallback(req: Request, res: Response) {
 
 	const user = {
 		id: "",
+		email: "",
 		username: "",
 		displayName: "",
-		email: "",
 		avatar: "",
+		scopes: [""],
 	};
 	let tokens!: Tokens;
 	try {
@@ -65,6 +66,15 @@ async function handleAuthCallback(req: Request, res: Response) {
 					},
 				}
 			);
+			const twitchScopeResponse = await fetch(
+				"https://id.twitch.tv/oauth2/validate",
+				{
+					headers: {
+						Authorization: `Bearer ${tokens.accessToken}`,
+						"Client-Id": env.TWITCH_CLIENT_ID,
+					},
+				}
+			);
 			const twitchUser: TwitchUserResponse = (await twitchUserResponse.json())
 				.data[0];
 			user.id = twitchUser.id;
@@ -72,6 +82,7 @@ async function handleAuthCallback(req: Request, res: Response) {
 			user.username = twitchUser.login;
 			user.displayName = twitchUser.display_name;
 			user.avatar = twitchUser.profile_image_url;
+			user.scopes = (await twitchScopeResponse.json()).scopes as string[];
 		}
 		if (platform === "discord") {
 			tokens = await discordAuth.validateAuthorizationCode(code);
@@ -98,15 +109,26 @@ async function handleAuthCallback(req: Request, res: Response) {
 			.selectDistinct()
 			.from(schema.accounts)
 			.where(eq(schema.accounts.id, user.id));
-
-		let userId!: string;
-		const [emailMatch] = await db
-			.select()
-			.from(schema.accounts)
-			.where(eq(schema.accounts.email, user.email))
-			.limit(1);
-
+		let userId: string = existingAccount?.userId ?? createId();
+		const existingScopesArray = existingAccount?.scope.split(" ");
+		//make sure user keeps old scopes in addition to new scopes
+		if (
+			existingAccount?.platform === "twitch" &&
+			!hasAllItems(user.scopes, existingScopesArray)
+		) {
+			return res.redirect(
+				301,
+				"/login/twitch?scopes=" +
+					user.scopes.concat(existingScopesArray).join("+")
+			);
+		}
 		if (!existingAccount) {
+			const [emailMatch] = await db
+				.select()
+				.from(schema.accounts)
+				.where(eq(schema.accounts.email, user.email))
+				.limit(1);
+
 			await db.transaction(async transaction => {
 				// Check if user exists by email, else create a new user
 				if (emailMatch && emailMatch.userId) {
@@ -129,7 +151,6 @@ async function handleAuthCallback(req: Request, res: Response) {
 
 				// Update the user with the primaryAccountId obtained from the inserted account
 				if (!userId) {
-					userId = createId();
 					await transaction.insert(schema.users).values({
 						id: userId,
 						primaryAccountId: user.id,
@@ -141,7 +162,17 @@ async function handleAuthCallback(req: Request, res: Response) {
 				}
 			});
 			// If account already exists we simply create a token for the user linked to that account
-		} else userId = existingAccount.userId!;
+		} else {
+			await db
+				.update(schema.accounts)
+				.set({
+					accessToken: tokens.accessToken,
+					refreshToken: tokens.refreshToken,
+					expiresAt: tokens.accessTokenExpiresAt,
+					scope: user.scopes.join(" "),
+				})
+				.where(eq(schema.accounts.id, existingAccount.id));
+		}
 
 		// Check if there is an existing and valid token for the user
 		// This ensures we don't flood the database with tokens, and have 2 at max per user
@@ -166,8 +197,8 @@ async function handleAuthCallback(req: Request, res: Response) {
 			jwt = existingSession.token;
 		} else {
 			const payload = {
-				u: userId, // user (used for validation on api requests)
-				a: user.id, // account (currently not actually used)
+				u: userId,
+				a: user.id, // user account id (twitch / discord)
 			};
 			jwt = await createJWT("HS256", secret, payload, {
 				expiresIn: new TimeSpan(30, "d"),
@@ -192,10 +223,6 @@ async function handleAuthCallback(req: Request, res: Response) {
 		console.log(e);
 		return res.status(500).send("Internal Server Error");
 	}
-}
-
-router.get("/login/callback", async (req: Request, res: Response) => {
-	await handleAuthCallback(req, res);
 });
 
 export default router;
