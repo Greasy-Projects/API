@@ -68,6 +68,7 @@ export class Auth implements AuthProvider {
 			accessToken: result.access_token,
 			refreshToken: result.refresh_token,
 			accessTokenExpiresAt: createDate(new TimeSpan(result.expires_in, "s")),
+			scope: String(result.scope).replace(",", " "),
 		};
 		return tokens;
 	}
@@ -84,6 +85,7 @@ export class Auth implements AuthProvider {
 			accessToken: result.access_token,
 			refreshToken: result.refresh_token,
 			accessTokenExpiresAt: createDate(new TimeSpan(result.expires_in, "s")),
+			scope: String(result.scope).replace(",", " "),
 		};
 		return tokens;
 	}
@@ -98,12 +100,14 @@ interface TokenResponseBody {
 	access_token: string;
 	expires_in: number;
 	refresh_token: string;
+	scope: string;
 }
 
 export interface Tokens {
 	accessToken: string;
 	refreshToken: string;
 	accessTokenExpiresAt: Date;
+	scope: string;
 }
 
 export interface DiscordUserResponse {

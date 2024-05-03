@@ -66,15 +66,7 @@ router.get("/login/callback", async (req: Request, res: Response) => {
 					},
 				}
 			);
-			const twitchScopeResponse = await fetch(
-				"https://id.twitch.tv/oauth2/validate",
-				{
-					headers: {
-						Authorization: `Bearer ${tokens.accessToken}`,
-						"Client-Id": env.TWITCH_CLIENT_ID,
-					},
-				}
-			);
+
 			const twitchUser: TwitchUserResponse = (await twitchUserResponse.json())
 				.data[0];
 			user.id = twitchUser.id;
@@ -82,7 +74,7 @@ router.get("/login/callback", async (req: Request, res: Response) => {
 			user.username = twitchUser.login;
 			user.displayName = twitchUser.display_name;
 			user.avatar = twitchUser.profile_image_url;
-			user.scopes = (await twitchScopeResponse.json()).scopes as string[];
+			user.scopes = tokens.scope.split(" ");
 		}
 		if (platform === "discord") {
 			tokens = await discordAuth.validateAuthorizationCode(code);
