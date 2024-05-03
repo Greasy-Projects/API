@@ -3,9 +3,10 @@ import { OAuth2Client } from "oslo/oauth2";
 import { TimeSpan, createDate } from "oslo";
 import { validateJWT } from "oslo/jwt";
 import { schema, db, secret } from "./db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { GraphQLError } from "graphql";
 import { ScopeGroup, Scope } from "./scopes";
+import { access } from "fs";
 
 const discordAuthorizeEndpoint = "https://discord.com/oauth2/authorize";
 const discordTokenEndpoint = "https://discord.com/api/oauth2/token";
@@ -238,6 +239,36 @@ export async function verifyAuth(request: Request | string, scopes?: Scope[]) {
 	if (!session) throw new GraphQLError("Invalid session");
 
 	return { user, account, payload };
+}
+
+export async function getToken(user: string): Promise<string> {
+	const [res] = await db
+		.select({
+			token: schema.accounts.accessToken,
+			refresh_token: schema.accounts.refreshToken,
+			expires_at: schema.accounts.expiresAt,
+		})
+		.from(schema.accounts)
+		.where(
+			or(eq(schema.accounts.id, user), eq(schema.accounts.username, user))
+		);
+	if (!res) throw new Error("Couldn't find user: " + user);
+	// check if token has expired
+	if (res.expires_at.getTime() < Date.now()) {
+		const refresh = await twitchAuth.refreshAccessToken(res.refresh_token);
+		db.update(schema.accounts)
+			.set({
+				accessToken: refresh.accessToken,
+				refreshToken: refresh.refreshToken,
+				expiresAt: refresh.accessTokenExpiresAt,
+				scope: refresh.scope,
+			})
+			.where(
+				or(eq(schema.accounts.id, user), eq(schema.accounts.username, user))
+			);
+		return refresh.accessToken;
+	}
+	return res.token;
 }
 
 export const discordAuth = new Auth(
