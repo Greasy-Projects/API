@@ -19,7 +19,7 @@ const createdUpdated = {
 		.$defaultFn(() => new Date()),
 	updatedAt: datetime("updated_at")
 		.notNull()
-		.$defaultFn(() => new Date()),
+		.$onUpdate(() => new Date()),
 };
 
 export const users = mysqlTable("users", {
