@@ -65,10 +65,10 @@ export const accounts = mysqlTable("user_accounts", {
 	}).notNull(),
 	accessToken: varchar("access_token", {
 		length: 100,
-	}),
+	}).notNull(),
 	refreshToken: varchar("refresh_token", {
 		length: 100,
-	}),
+	}).notNull(),
 	expiresAt: datetime("expires_at").notNull(),
 	...createdUpdated,
 });
