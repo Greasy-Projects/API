@@ -10,7 +10,8 @@ import { lte } from "drizzle-orm";
 
 import { schema as gql } from "./gql";
 import { db, schema } from "./db";
-
+import watchtime from "./watchtime";
+watchtime();
 const app = express();
 
 app.use(cookieParser());
