@@ -12,6 +12,7 @@
 		"migrate": "tsx src/db/migrate",
 		"setup": "tsx src/db/util/run",
 		"push": "drizzle-kit push:mysql",
+		"kit": "drizzle-kit",
 		"tsx": "./src/main.ts --watch",
 		"lint": "eslint . --fix && prettier --cache --write ."
 	},

@@ -6,6 +6,8 @@ import {
 	mysqlEnum,
 	AnyMySqlColumn,
 	boolean,
+	int,
+	unique,
 } from "drizzle-orm/mysql-core";
 import { createId } from "@paralleldrive/cuid2";
 
@@ -104,6 +106,26 @@ export const sessions = mysqlTable("sessions", {
 		.unique(),
 	expiresAt: datetime("expires_at").notNull(),
 });
+
+export const watchtime = mysqlTable(
+	"watchtime",
+	{
+		id: varchar("id", {
+			length: lengthOf.id,
+		})
+			.primaryKey()
+			.$defaultFn(() => createId()),
+		twitchId: varchar("twitch_id", {
+			length: lengthOf.id,
+		}).notNull(),
+		time: int("time"),
+		date: datetime("date").notNull(),
+		updatedAt: createdUpdated.updatedAt,
+	},
+	t => ({
+		unq: unique().on(t.twitchId, t.date),
+	})
+);
 
 // // TODO: logs table
 // export const logs = mysqlTable(
