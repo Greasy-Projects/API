@@ -18,8 +18,8 @@ export default async () => {
 	thresholdDate.setMinutes(thresholdDate.getMinutes() - 5);
 	const TenMinutesAgo = toSQLDate(thresholdDate);
 
-	console.log(FiveMinutesAgo);
-	console.log(await db.select().from(watchtime));
+	// console.log(FiveMinutesAgo);
+	// console.log(await db.select().from(watchtime));
 	// on first watch we insert the user with a time of NULL
 	// if the user has been watching for more than 5 minutes, which means the updatedAt is more than 5 minutes ago we set the time +5
 	// if the user hasn't been updated for more than 10 minutes the user has left in between,
@@ -29,7 +29,7 @@ export default async () => {
 	const WHEN_FIVE_THEN = sql`WHEN ${watchtime.updatedAt} < ${FiveMinutesAgo} THEN`;
 	const WHEN_TEN_THEN = sql`WHEN ${watchtime.updatedAt} < ${TenMinutesAgo} THEN`;
 
-	console.log(await db.select().from(watchtime));
+	// console.log(await db.select().from(watchtime));
 
 	try {
 		const token = await getToken(streamer);
