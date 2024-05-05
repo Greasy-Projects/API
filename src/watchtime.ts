@@ -1,25 +1,44 @@
 import axios from "axios";
 import { getToken } from "./auth";
 import { db, watchtime } from "./db";
-import { between, eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
+import { toSQLDate } from "./util";
 const streamer = "greasymac";
 export default async () => {
 	const startOfMonth = new Date();
-	const treshholdDate = new Date();
-	treshholdDate.setMinutes(treshholdDate.getMinutes() - 5);
 	startOfMonth.setUTCDate(1);
 	startOfMonth.setUTCHours(0, 0, 0, 0);
-	console.log(await db.select().from(watchtime));
 
+	const thresholdDate = new Date();
+	thresholdDate.setMinutes(thresholdDate.getMinutes() - 4);
+	const FiveMinutesAgo = toSQLDate(thresholdDate);
+
+	thresholdDate.setMinutes(thresholdDate.getMinutes() - 5);
+	const TenMinutesAgo = toSQLDate(thresholdDate);
+
+	console.log(FiveMinutesAgo);
+	console.log(await db.select().from(watchtime));
+	// on first watch we insert the user with a time of NULL
+	// if the user has been watching for more than 5 minutes, which means the updatedAt is more than 5 minutes ago we set the time +5
+	// if the user hasn't been updated for more than 10 minutes the user has left in between,
+	// we set the updated at value but don't increase the time so the user will receive +5 on the next run taken they haven't left
+
+	// we check for 4 and 9 minutes to account for api and db delays since we run at a 5 minute interval
+	const WHEN_FIVE_THEN = sql`WHEN ${watchtime.updatedAt} < ${FiveMinutesAgo} THEN`;
+	const WHEN_TEN_THEN = sql`WHEN ${watchtime.updatedAt} < ${TenMinutesAgo} THEN`;
+	// 2024-05-05T16:28:34.000Z  <
+	// 2024-05-05 15:37:40.596
 	await db
 		.insert(watchtime)
 		.values({
 			twitchId: "1111",
 			date: startOfMonth,
+			updatedAt: sql`${toSQLDate(new Date())}`,
 		})
 		.onDuplicateKeyUpdate({
 			set: {
-				time: sql`CASE WHEN VALUES(${watchtime.updatedAt}) < ${treshholdDate} THEN COALESCE(${watchtime.time}, 0) + 5 ELSE ${watchtime.time} END`,
+				time: sql`CASE ${WHEN_TEN_THEN} ${watchtime.time} ${WHEN_FIVE_THEN} COALESCE(${watchtime.time}, 0) + 5 ELSE ${watchtime.time} END`,
+				updatedAt: sql`CASE ${WHEN_FIVE_THEN} ${toSQLDate(new Date())} ELSE ${watchtime.updatedAt} END`,
 			},
 		});
 
