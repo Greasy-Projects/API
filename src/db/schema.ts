@@ -120,7 +120,7 @@ export const watchtime = mysqlTable(
 		}).notNull(),
 		time: int("time"),
 		date: datetime("date").notNull(),
-		updatedAt: createdUpdated.updatedAt,
+		updatedAt: datetime("updated_at").notNull(),
 	},
 	t => ({
 		unq: unique().on(t.twitchId, t.date),
