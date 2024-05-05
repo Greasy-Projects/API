@@ -12,20 +12,23 @@ export default async () => {
 	startOfMonth.setUTCHours(0, 0, 0, 0);
 
 	const thresholdDate = new Date();
-	thresholdDate.setMinutes(thresholdDate.getMinutes() - 4.7);
+	thresholdDate.setMinutes(thresholdDate.getMinutes() - 4.7); //4.7 to account for potential delays
 	const FiveMinutesAgo = toSQLDate(thresholdDate);
 
 	thresholdDate.setMinutes(thresholdDate.getMinutes() - 5);
 	const TenMinutesAgo = toSQLDate(thresholdDate);
 
-	// console.log(FiveMinutesAgo);
-	// console.log(await db.select().from(watchtime));
-	// on first watch we insert the user with a time of NULL
-	// if the user has been watching for more than 5 minutes, which means the updatedAt is more than 5 minutes ago we set the time +5
-	// if the user hasn't been updated for more than 10 minutes the user has left in between,
-	// we set the updated at value but don't increase the time so the user will receive +5 on the next run taken they haven't left
+	// When a viewer is first observed, their record is inserted into the database with a NULL value for their watch time.
 
-	// we check for 4 and 9 minutes to account for api and db delays since we run at a 5 minute interval
+	// If the viewer has been active for more than 5 minutes (indicating their last update was more than 5 minutes ago),
+	// their watch time is increased by 5 minutes.
+
+	// If the viewer hasn't been updated for more than 10 minutes, it suggests they have stopped watching at some point in between.
+	// In this case, we update the "updatedAt" value to the current time,
+	// but we don't increase their watch time.
+	// This ensures that they will receive a +5 increment on the next run,
+	// assuming they haven't left and continue watching.
+
 	const WHEN_FIVE_THEN = sql`WHEN ${watchtime.updatedAt} < ${FiveMinutesAgo} THEN`;
 	const WHEN_TEN_THEN = sql`WHEN ${watchtime.updatedAt} < ${TenMinutesAgo} THEN`;
 
@@ -34,6 +37,7 @@ export default async () => {
 	try {
 		const token = await getToken(streamer);
 
+		// Check if the streamer is live
 		const live = await axios.get("https://api.twitch.tv/helix/streams", {
 			params: {
 				user_login: streamer,
@@ -45,6 +49,7 @@ export default async () => {
 		});
 		if (!live.data.data.length) return;
 
+		// If the stream is live, fetch viewer information
 		if (live.data?.data[0]?.type === "live") {
 			const chatters = await axios.get(
 				"https://api.twitch.tv/helix/chat/chatters",
@@ -60,7 +65,10 @@ export default async () => {
 					},
 				}
 			);
+
 			const viewers = chatters.data.data as { user_id: string }[];
+
+			// Prepare values for batch insertion
 			const values = [];
 			for (const viewer of viewers) {
 				values.push({
