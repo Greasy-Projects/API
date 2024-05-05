@@ -52,6 +52,7 @@ export default async () => {
 					params: {
 						broadcaster_id: live.data?.data[0].user_id,
 						moderator_id: live.data?.data[0].user_id,
+						first: 1000,
 					},
 					headers: {
 						Authorization: `Bearer ${token}`,
