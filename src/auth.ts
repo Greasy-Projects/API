@@ -68,7 +68,7 @@ export class Auth implements AuthProvider {
 			accessToken: result.access_token,
 			refreshToken: result.refresh_token,
 			accessTokenExpiresAt: createDate(new TimeSpan(result.expires_in, "s")),
-			scope: String(result.scope).replace(",", " "),
+			scope: (result.scope as unknown as string[]).join(" "),
 		};
 		return tokens;
 	}
