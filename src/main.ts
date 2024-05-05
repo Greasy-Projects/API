@@ -12,7 +12,7 @@ import { schema as gql } from "./gql";
 import { db, schema } from "./db";
 import watchtime from "./watchtime";
 // IN TESTING
-setInterval(watchtime, 300000);
+setInterval(watchtime, 150000);
 watchtime();
 const app = express();
 
