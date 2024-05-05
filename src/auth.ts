@@ -6,7 +6,6 @@ import { schema, db, secret } from "./db";
 import { and, eq, or } from "drizzle-orm";
 import { GraphQLError } from "graphql";
 import { ScopeGroup, Scope } from "./scopes";
-import { access } from "fs";
 
 const discordAuthorizeEndpoint = "https://discord.com/oauth2/authorize";
 const discordTokenEndpoint = "https://discord.com/api/oauth2/token";
