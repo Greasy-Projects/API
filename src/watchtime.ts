@@ -12,7 +12,7 @@ export default async () => {
 	startOfMonth.setUTCHours(0, 0, 0, 0);
 
 	const thresholdDate = new Date();
-	thresholdDate.setMinutes(thresholdDate.getMinutes() - 4);
+	thresholdDate.setMinutes(thresholdDate.getMinutes() - 4.7);
 	const FiveMinutesAgo = toSQLDate(thresholdDate);
 
 	thresholdDate.setMinutes(thresholdDate.getMinutes() - 5);
