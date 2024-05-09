@@ -21,6 +21,17 @@ const UserType = g.type("User", {
 	createdAt: dateType,
 	updatedAt: dateType,
 });
+const TwitchUserType = g.type("TwitchUser", {
+	id: g.id(),
+	login: g.string(),
+	display_name: g.string(),
+	type: g.string(),
+	broadcaster_type: g.string(),
+	description: g.string(),
+	profile_image_url: g.string(),
+	view_count: g.int(),
+	created_at: g.string(),
+});
 
 const WatchtimeType = g.type("Watchtime", {
 	time: g.int(),
@@ -40,6 +51,9 @@ export const queryType = g.type("Query", {
 		.args({
 			limit: g.int().default(10),
 		}),
+	getTwitchUser: g.ref(TwitchUserType).list().args({
+		user: g.id(),
+	}),
 
 	checkWhitelist: g.boolean(),
 	checkWhitelistByUUID: g.boolean().args({

@@ -2,6 +2,7 @@ import { mutationType, queryType } from "../schema";
 import { contentQuery, contentMutation } from "./content";
 import { whitelistQuery, whitelistMutation } from "./whitelist";
 import watchtime from "./watchtime";
+import getTwitchUser from "./getTwitchUser";
 
 import me from "./me";
 import { InferResolvers } from "garph";
@@ -16,6 +17,7 @@ export const resolvers = {
 		...contentQuery,
 		...me,
 		...watchtime,
+		...getTwitchUser,
 		...whitelistQuery,
 	},
 
