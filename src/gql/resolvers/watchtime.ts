@@ -12,6 +12,8 @@ const excludedBots = [
 const excludedUsers = [
 	"43547909", //drapsnatt
 	"172254892", //d0nk7
+	"79343170", //tsaeb
+	"708701718", // 8roe
 ];
 const watchtimeResolver: Resolvers["Query"] = {
 	watchtime: async (_, query) => {
