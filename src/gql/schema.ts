@@ -22,11 +22,24 @@ const UserType = g.type("User", {
 	updatedAt: dateType,
 });
 
+const WatchtimeType = g.type("Watchtime", {
+	time: g.int(),
+	displayName: g.string(),
+	avatar: g.string().optional(),
+});
+
 export const queryType = g.type("Query", {
 	content: g.string().args({
 		path: g.string(),
 	}),
 	me: g.ref(UserType).description("Get logged in user."),
+
+	watchtime: g
+		.ref(WatchtimeType)
+		.list()
+		.args({
+			limit: g.int().default(10),
+		}),
 
 	checkWhitelist: g.boolean(),
 	checkWhitelistByUUID: g.boolean().args({
