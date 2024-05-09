@@ -1,10 +1,11 @@
 import env from "~/env";
 import { GraphQLError } from "graphql";
 import axios from "axios";
-import { type Resolvers, cache } from "./";
+import { type Resolvers } from "./";
 import { verifyAuth } from "../../auth";
 import { Scope } from "../../scopes";
 import { cleanFilePath } from "../../util";
+import { cache } from "~/main";
 
 const authToken = env.GITHUB_TOKEN;
 const repoOwner = env.GITHUB_OWNER;

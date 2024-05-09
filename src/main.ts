@@ -1,3 +1,5 @@
+import NodeCache from "node-cache";
+export const cache = new NodeCache();
 import env from "~/env";
 import express from "express";
 import fs from "fs";

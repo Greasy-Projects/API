@@ -1,10 +1,11 @@
 import { GraphQLError } from "graphql";
-import { type Resolvers, cache } from "./index";
+import { type Resolvers } from "./index";
 import { verifyAuth } from "~/auth";
 import { db, schema } from "~/db";
 import { Scope } from "~/scopes";
 import { createHash } from "node:crypto";
 import { eq } from "drizzle-orm";
+import { cache } from "~/main";
 const uuidRegex = new RegExp(
 	"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
 );
