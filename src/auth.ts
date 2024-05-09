@@ -6,6 +6,8 @@ import { schema, db, secret } from "./db";
 import { and, eq, or } from "drizzle-orm";
 import { GraphQLError } from "graphql";
 import { ScopeGroup, Scope } from "./scopes";
+import axios from "axios";
+import { cache } from "./main";
 
 const discordAuthorizeEndpoint = "https://discord.com/oauth2/authorize";
 const discordTokenEndpoint = "https://discord.com/api/oauth2/token";
@@ -270,6 +272,23 @@ export async function getToken(user: string): Promise<string> {
 	return res.token;
 }
 
+export async function getClientToken(): Promise<string> {
+	const cachedToken = cache.get("ClientToken");
+	if (cachedToken) {
+		return cachedToken as string;
+	}
+
+	const res = await axios.post("https://id.twitch.tv/oauth2/token", null, {
+			params: {
+				client_id: env.TWITCH_CLIENT_ID,
+				client_secret: env.TWITCH_CLIENT_SECRET,
+				grant_type: "client_credentials",
+			},
+		}),
+		token = res.data.access_token as string;
+	cache.set("ClientToken", token, 3600);
+	return token;
+}
 export const discordAuth = new Auth(
 	AuthPlatform.Discord,
 	env.DISCORD_CLIENT_ID,
