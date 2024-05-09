@@ -1,9 +1,18 @@
 import axios from "axios";
 import { db, watchtime } from "~/db";
 import { type Resolvers } from "./";
-import { desc, inArray, not } from "drizzle-orm";
+import { asc, desc, inArray, not } from "drizzle-orm";
 import { getClientToken } from "~/auth";
-const excludedIds = ["100135110", "19264788", "807869712", "68136884"];
+const excludedBots = [
+	"100135110", //streamelements
+	"19264788", //nightbot
+	"807869712", //peepostreambot
+	"68136884", //supibot
+];
+const excludedUsers = [
+	"43547909", //drapsnatt
+	"172254892", //d0nk7
+];
 const watchtimeResolver: Resolvers["Query"] = {
 	watchtime: async (_, query) => {
 		const limit = Math.min(query.limit, 100);
@@ -15,8 +24,11 @@ const watchtimeResolver: Resolvers["Query"] = {
 			})
 			.from(watchtime)
 			.limit(limit)
-			.where(not(inArray(watchtime.twitchId, excludedIds)))
-			.orderBy(desc(watchtime.time));
+			.where(
+				not(inArray(watchtime.twitchId, [...excludedBots, ...excludedUsers]))
+			)
+			// sort by oldest account (based on auto incremented twitch id) if times are similar
+			.orderBy(desc(watchtime.time), asc(watchtime.twitchId));
 		const userIds = times.map(entry => entry.id);
 
 		const idParam = userIds.map(id => `id=${id}`).join("&");
