@@ -3,7 +3,7 @@ import { defineConfig } from "drizzle-kit";
 export default defineConfig({
 	schema: "./src/db/schema.ts",
 	out: "./src/db/migrations",
-	driver: "mysql2",
+	dialect: "mysql",
 	dbCredentials: {
 		host: env.DB_HOST,
 		user: env.DB_USER,
