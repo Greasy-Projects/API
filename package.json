@@ -10,7 +10,7 @@
 		"pull": "drizzle-kit introspect:mysql",
 		"studio": "drizzle-kit studio --port 3333",
 		"migrate": "tsx src/db/migrate",
-		"setup": "tsx src/db/util/run",
+		"util": "tsx src/db/util/run",
 		"push": "drizzle-kit push:mysql",
 		"kit": "drizzle-kit",
 		"tsx": "./src/main.ts --watch",
