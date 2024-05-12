@@ -50,6 +50,7 @@ export const queryType = g.type("Query", {
 		.list()
 		.args({
 			limit: g.int().default(10),
+			total: g.boolean().default(false),
 		}),
 	getTwitchUser: g.ref(TwitchUserType).list().args({
 		user: g.id(),

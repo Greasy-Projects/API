@@ -1,7 +1,7 @@
 import axios from "axios";
 import { db, watchtime } from "~/db";
 import { type Resolvers } from "./";
-import { asc, desc, inArray, not } from "drizzle-orm";
+import { and, eq, asc, desc, inArray, not, sql } from "drizzle-orm";
 import { getClientToken } from "~/auth";
 const excludedBots = [
 	"100135110", //streamelements
@@ -18,19 +18,46 @@ const excludedUsers = [
 const watchtimeResolver: Resolvers["Query"] = {
 	watchtime: async (_, query) => {
 		const limit = Math.min(query.limit, 100);
-		console.log(limit);
-		const times = await db
-			.select({
-				time: watchtime.time,
-				id: watchtime.twitchId,
-			})
-			.from(watchtime)
-			.limit(limit)
-			.where(
-				not(inArray(watchtime.twitchId, [...excludedBots, ...excludedUsers]))
-			)
-			// sort by oldest account (based on auto incremented twitch id) if times are similar
-			.orderBy(desc(watchtime.time), asc(watchtime.twitchId));
+		let times: {
+			time: number | null;
+			id: string;
+		}[];
+		if (query.total)
+			times = await db
+				.select({
+					time: sql<number>`sum(${watchtime.time})`,
+					id: watchtime.twitchId,
+				})
+				.from(watchtime)
+				.limit(limit)
+				.where(
+					not(inArray(watchtime.twitchId, [...excludedBots, ...excludedUsers]))
+				)
+				.groupBy(watchtime.twitchId)
+				// sort by oldest account (based on auto incremented twitch id) if times are similar
+				.orderBy(desc(watchtime.time), asc(watchtime.twitchId));
+		else {
+			const startOfMonth = new Date();
+			startOfMonth.setUTCDate(1);
+			startOfMonth.setUTCHours(0, 0, 0, 0);
+			times = await db
+				.select({
+					time: watchtime.time,
+					id: watchtime.twitchId,
+				})
+				.from(watchtime)
+				.limit(limit)
+				.where(
+					and(
+						not(
+							inArray(watchtime.twitchId, [...excludedBots, ...excludedUsers])
+						),
+						eq(watchtime.date, startOfMonth)
+					)
+				)
+				// sort by oldest account (based on auto incremented twitch id) if times are similar
+				.orderBy(desc(watchtime.time), asc(watchtime.twitchId));
+		}
 		const userIds = times.map(entry => entry.id);
 
 		const idParam = userIds.map(id => `id=${id}`).join("&");
