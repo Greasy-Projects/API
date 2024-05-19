@@ -75,14 +75,18 @@ const watchtimeResolver: Resolvers["Query"] = {
 				display_name: string;
 				profile_image_url: string;
 			}[];
-		return times.map(entry => {
-			const data = userData.find(user => user.id === entry.id);
-			return {
-				displayName: data!.display_name,
-				time: entry.time ?? 0,
-				avatar: data!.profile_image_url,
-			};
-		});
+		return times
+			.map(entry => {
+				const data = userData.find(user => user.id === entry.id);
+				if (!data) return null;
+
+				return {
+					displayName: data.display_name,
+					time: entry.time ?? 0,
+					avatar: data.profile_image_url,
+				};
+			})
+			.filter(e => e !== null);
 	},
 };
 export default watchtimeResolver;
