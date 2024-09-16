@@ -48,6 +48,10 @@ fs.readdirSync("./src/routes").forEach(async file => {
 	}
 });
 
+app.get('/', (req, res) => {
+    res.status(200).send('OK');
+});
+
 app.listen(env.PORT, () => {
 	console.log(`Running at http://localhost:${env.PORT}`);
 });
