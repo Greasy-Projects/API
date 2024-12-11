@@ -1,7 +1,7 @@
 import { mutationType, queryType } from "../schema";
 import { contentQuery, contentMutation } from "./content";
 import { whitelistQuery, whitelistMutation } from "./whitelist";
-// import watchtime from "./watchtime";
+import watchtime from "./watchtime";
 import getTwitchUser from "./getTwitchUser";
 
 import me from "./me";
@@ -16,7 +16,7 @@ export const resolvers = {
 	Query: {
 		...contentQuery,
 		...me,
-		// ...watchtime,
+		...watchtime,
 		...getTwitchUser,
 		...whitelistQuery,
 	},
