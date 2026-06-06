@@ -18,6 +18,7 @@ const excludedUsers = [
 const watchtimeResolver: Resolvers["Query"] = {
 	watchtime: async (_, query) => {
 		const limit = Math.min(query.limit, 100);
+		const totalTime = sql<number>`sum(${watchtime.time})`;
 		let times: {
 			time: number | null;
 			id: string;
@@ -25,7 +26,7 @@ const watchtimeResolver: Resolvers["Query"] = {
 		if (query.total)
 			times = await db
 				.select({
-					time: sql<number>`sum(${watchtime.time})`,
+					time: totalTime,
 					id: watchtime.twitchId,
 				})
 				.from(watchtime)
@@ -35,7 +36,7 @@ const watchtimeResolver: Resolvers["Query"] = {
 				)
 				.groupBy(watchtime.twitchId)
 				// sort by oldest account (based on auto incremented twitch id) if times are similar
-				.orderBy(desc(watchtime.time), asc(watchtime.twitchId));
+				.orderBy(desc(totalTime), asc(watchtime.twitchId));
 		else {
 			const startOfMonth = new Date();
 			startOfMonth.setUTCDate(1);
@@ -59,6 +60,7 @@ const watchtimeResolver: Resolvers["Query"] = {
 				.orderBy(desc(watchtime.time), asc(watchtime.twitchId));
 		}
 		const userIds = times.map(entry => entry.id);
+		if (userIds.length === 0) return [];
 
 		const idParam = userIds.map(id => `id=${id}`).join("&");
 		const res = await axios.get(
