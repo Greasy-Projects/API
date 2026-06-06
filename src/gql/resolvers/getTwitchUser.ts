@@ -1,6 +1,6 @@
 import axios from "axios";
 import { type Resolvers } from ".";
-import { getClientToken } from "~/auth";
+import { getClientToken } from "../../auth";
 
 const watchtimeResolver: Resolvers["Query"] = {
 	getTwitchUser: async (_, query) => {

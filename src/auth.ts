@@ -1,4 +1,4 @@
-import env from "~/env";
+import env from "./env";
 import { OAuth2Client } from "oslo/oauth2";
 import { TimeSpan, createDate } from "oslo";
 import { validateJWT } from "oslo/jwt";

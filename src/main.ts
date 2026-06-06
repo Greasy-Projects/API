@@ -1,8 +1,9 @@
 import NodeCache from "node-cache";
 export const cache = new NodeCache();
-import env from "~/env";
+import env from "./env";
 import express from "express";
 import fs from "fs";
+import path from "path";
 
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
@@ -40,8 +41,11 @@ app.use(yoga.graphqlEndpoint, yogaRouter);
 // Add the global CSP configuration for the rest of your server.
 // app.use(helmet());
 
-fs.readdirSync("./src/routes").forEach(async file => {
-	if (file.endsWith(".ts")) {
+fs.readdirSync(path.join(__dirname, "routes")).forEach(async file => {
+	if (
+		(file.endsWith(".ts") || file.endsWith(".js")) &&
+		!file.endsWith(".d.ts")
+	) {
 		const route = await import(`./routes/${file}`);
 		app.use(route.default);
 		console.log(`Loaded routes/${file}`);

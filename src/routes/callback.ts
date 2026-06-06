@@ -1,4 +1,4 @@
-import env from "~/env";
+import env from "../env";
 import express from "express";
 import "dotenv/config";
 import {
@@ -15,7 +15,7 @@ import { createJWT } from "oslo/jwt";
 import { createId } from "@paralleldrive/cuid2";
 import { TimeSpan } from "oslo";
 import type { Request, Response } from "express";
-import { hasAllItems } from "~/util";
+import { hasAllItems } from "../util";
 const router = express.Router();
 
 router.get("/login/callback", async (req: Request, res: Response) => {

@@ -1,8 +1,8 @@
 import axios from "axios";
-import { db, watchtime } from "~/db";
+import { db, watchtime } from "../../db";
 import { type Resolvers } from "./";
 import { and, eq, asc, desc, inArray, not, sql } from "drizzle-orm";
-import { getClientToken } from "~/auth";
+import { getClientToken } from "../../auth";
 const excludedBots = [
 	"100135110", //streamelements
 	"19264788", //nightbot

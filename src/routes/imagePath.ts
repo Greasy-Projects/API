@@ -1,4 +1,4 @@
-import env from "~/env";
+import env from "../env";
 import express from "express";
 import axios from "axios";
 import { cleanFilePath } from "../util";

@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 import { TimeSpan } from "oslo";
 import { createJWT } from "oslo/jwt";
-import { db, connection, schema, secret } from "~/db";
-import { Scope } from "~/scopes";
+import { db, connection, schema, secret } from "..";
+import { Scope } from "../../scopes";
 export default async function createWhitelistUser() {
 	await db.transaction(async transaction => {
 		const id = "system:whitelist";

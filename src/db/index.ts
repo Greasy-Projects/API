@@ -1,4 +1,4 @@
-import env from "~/env";
+import env from "../env";
 export * as schema from "./schema";
 export * from "./schema";
 export { db, connection } from "./config";
