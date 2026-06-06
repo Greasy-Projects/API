@@ -21,7 +21,8 @@ export default async function createWhitelistUser() {
 				displayName: id,
 				username: id,
 			})
-			.onDuplicateKeyUpdate({
+			.onConflictDoUpdate({
+				target: schema.accounts.id,
 				set: {
 					id,
 				},
@@ -34,7 +35,8 @@ export default async function createWhitelistUser() {
 				scope: [Scope.ReadWhitelist, Scope.ManageWhitelist].join(" "),
 				primaryAccountId: id,
 			})
-			.onDuplicateKeyUpdate({
+			.onConflictDoUpdate({
+				target: schema.users.id,
 				set: { id },
 			});
 		await transaction
@@ -60,7 +62,8 @@ export default async function createWhitelistUser() {
 				token: jwt,
 				expiresAt: date,
 			})
-			.onDuplicateKeyUpdate({
+			.onConflictDoUpdate({
+				target: schema.sessions.token,
 				set: {
 					userId: id,
 				},

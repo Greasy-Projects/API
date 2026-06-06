@@ -48,8 +48,8 @@ fs.readdirSync("./src/routes").forEach(async file => {
 	}
 });
 
-app.get('/', (req, res) => {
-    res.status(200).send('OK');
+app.get("/", (req, res) => {
+	res.status(200).send("OK");
 });
 
 app.listen(env.PORT, () => {

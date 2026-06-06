@@ -2,7 +2,6 @@ import axios from "axios";
 import { getToken } from "./auth";
 import { db, watchtime } from "./db";
 import { sql } from "drizzle-orm";
-import { toSQLDate } from "./util";
 const streamer = "greasymac";
 
 // IN TESTING
@@ -13,10 +12,10 @@ export default async () => {
 
 	const thresholdDate = new Date();
 	thresholdDate.setMinutes(thresholdDate.getMinutes() - 4.7); //4.7 to account for potential delays
-	const FiveMinutesAgo = toSQLDate(thresholdDate);
+	const FiveMinutesAgo = new Date(thresholdDate);
 
 	thresholdDate.setMinutes(thresholdDate.getMinutes() - 5);
-	const TenMinutesAgo = toSQLDate(thresholdDate);
+	const TenMinutesAgo = new Date(thresholdDate);
 
 	// When a viewer is first observed, their record is inserted into the database with a NULL value for their watch time.
 
@@ -74,16 +73,17 @@ export default async () => {
 				values.push({
 					twitchId: viewer.user_id,
 					date: startOfMonth,
-					updatedAt: sql`${toSQLDate(new Date())}`,
+					updatedAt: new Date(),
 				});
 			}
 			await db
 				.insert(watchtime)
 				.values(values)
-				.onDuplicateKeyUpdate({
+				.onConflictDoUpdate({
+					target: [watchtime.twitchId, watchtime.date],
 					set: {
 						time: sql`CASE ${WHEN_TEN_THEN} ${watchtime.time} ${WHEN_FIVE_THEN} COALESCE(${watchtime.time}, 0) + 5 ELSE ${watchtime.time} END`,
-						updatedAt: sql`CASE ${WHEN_FIVE_THEN} ${toSQLDate(new Date())} ELSE ${watchtime.updatedAt} END`,
+						updatedAt: sql`CASE ${WHEN_FIVE_THEN} ${new Date()} ELSE ${watchtime.updatedAt} END`,
 					},
 				});
 		}

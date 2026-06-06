@@ -7,16 +7,17 @@ import type { Request, Response } from "express";
 
 const router = express.Router();
 
-router.get("/image/:imagePath(*)", async (req: Request, res: Response) => {
+router.get("/image/*imagePath", async (req: Request, res: Response) => {
 	try {
 		const { imagePath } = req.params;
+		const path = Array.isArray(imagePath) ? imagePath.join("/") : imagePath;
 		const authToken = env.GITHUB_TOKEN;
 		const repoOwner = env.GITHUB_OWNER;
 		const repoName = env.GITHUB_REPO;
 
 		const { data } = await axios.get(
 			`https://raw.githubusercontent.com/${repoOwner}/${repoName}/${cleanFilePath(
-				imagePath
+				path
 			)}`,
 			{
 				headers: {
@@ -28,7 +29,7 @@ router.get("/image/:imagePath(*)", async (req: Request, res: Response) => {
 		res.setHeader("Cache-Control", "max-age=43200");
 		res.setHeader("Content-Type", "image/png");
 		res.send(data);
-	} catch (error) {
+	} catch {
 		res.status(404);
 	}
 });

@@ -1,1 +1,0 @@
-ALTER TABLE `watchtime` ADD CONSTRAINT `watchtime_twitch_id_date_unique` UNIQUE(`twitch_id`,`date`);

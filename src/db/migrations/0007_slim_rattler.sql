@@ -1,1 +1,0 @@
-ALTER TABLE `watchtime` ADD `updated_at` datetime NOT NULL;

@@ -1,102 +1,90 @@
 {
-	"version": "5",
-	"dialect": "mysql",
-	"id": "a7d39fc7-e7e2-487f-a9b5-f47a74375f75",
-	"prevId": "088b8dfe-c856-48b1-8b51-cba15b621b9e",
+	"id": "f26c7055-5b9a-497d-80f7-ef82163955a1",
+	"prevId": "00000000-0000-0000-0000-000000000000",
+	"version": "7",
+	"dialect": "postgresql",
 	"tables": {
-		"user_accounts": {
+		"public.user_accounts": {
 			"name": "user_accounts",
+			"schema": "",
 			"columns": {
 				"id": {
 					"name": "id",
 					"type": "varchar(100)",
-					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"primaryKey": true,
+					"notNull": true
 				},
 				"username": {
 					"name": "username",
 					"type": "text",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"display_name": {
 					"name": "display_name",
 					"type": "text",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"email": {
 					"name": "email",
 					"type": "varchar(255)",
 					"primaryKey": false,
-					"notNull": false,
-					"autoincrement": false
+					"notNull": false
 				},
 				"avatar": {
 					"name": "avatar",
 					"type": "varchar(255)",
 					"primaryKey": false,
-					"notNull": false,
-					"autoincrement": false
+					"notNull": false
 				},
 				"user_id": {
 					"name": "user_id",
 					"type": "varchar(100)",
 					"primaryKey": false,
-					"notNull": false,
-					"autoincrement": false
+					"notNull": false
 				},
 				"platform": {
 					"name": "platform",
-					"type": "enum('twitch','discord')",
+					"type": "varchar(255)",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"scope": {
 					"name": "scope",
 					"type": "varchar(255)",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"access_token": {
 					"name": "access_token",
 					"type": "varchar(100)",
 					"primaryKey": false,
-					"notNull": false,
-					"autoincrement": false
+					"notNull": true
 				},
 				"refresh_token": {
 					"name": "refresh_token",
 					"type": "varchar(100)",
 					"primaryKey": false,
-					"notNull": false,
-					"autoincrement": false
+					"notNull": true
 				},
 				"expires_at": {
 					"name": "expires_at",
-					"type": "datetime",
+					"type": "timestamp",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"created_at": {
 					"name": "created_at",
-					"type": "datetime",
+					"type": "timestamp",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"updated_at": {
 					"name": "updated_at",
-					"type": "datetime",
+					"type": "timestamp",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				}
 			},
 			"indexes": {},
@@ -111,52 +99,46 @@
 					"onUpdate": "restrict"
 				}
 			},
-			"compositePrimaryKeys": {
-				"user_accounts_id": {
-					"name": "user_accounts_id",
-					"columns": ["id"]
-				}
-			},
-			"uniqueConstraints": {}
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
 		},
-		"minecraft_users": {
+		"public.minecraft_users": {
 			"name": "minecraft_users",
+			"schema": "",
 			"columns": {
 				"id": {
 					"name": "id",
 					"type": "varchar(36)",
-					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"primaryKey": true,
+					"notNull": true
 				},
 				"user_id": {
 					"name": "user_id",
 					"type": "varchar(100)",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"whitelisted": {
 					"name": "whitelisted",
 					"type": "boolean",
 					"primaryKey": false,
 					"notNull": false,
-					"autoincrement": false,
 					"default": true
 				},
 				"created_at": {
 					"name": "created_at",
-					"type": "datetime",
+					"type": "timestamp",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"updated_at": {
 					"name": "updated_at",
-					"type": "datetime",
+					"type": "timestamp",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				}
 			},
 			"indexes": {},
@@ -171,49 +153,45 @@
 					"onUpdate": "no action"
 				}
 			},
-			"compositePrimaryKeys": {
-				"minecraft_users_id": {
-					"name": "minecraft_users_id",
-					"columns": ["id"]
-				}
-			},
+			"compositePrimaryKeys": {},
 			"uniqueConstraints": {
 				"minecraft_users_id_unique": {
 					"name": "minecraft_users_id_unique",
+					"nullsNotDistinct": false,
 					"columns": ["id"]
 				}
-			}
+			},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
 		},
-		"sessions": {
+		"public.sessions": {
 			"name": "sessions",
+			"schema": "",
 			"columns": {
 				"id": {
 					"name": "id",
 					"type": "varchar(100)",
-					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"primaryKey": true,
+					"notNull": true
 				},
 				"user_id": {
 					"name": "user_id",
 					"type": "varchar(100)",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"token": {
 					"name": "token",
 					"type": "varchar(255)",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"expires_at": {
 					"name": "expires_at",
-					"type": "datetime",
+					"type": "timestamp",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				}
 			},
 			"indexes": {},
@@ -228,57 +206,52 @@
 					"onUpdate": "no action"
 				}
 			},
-			"compositePrimaryKeys": {
-				"sessions_id": {
-					"name": "sessions_id",
-					"columns": ["id"]
-				}
-			},
+			"compositePrimaryKeys": {},
 			"uniqueConstraints": {
 				"sessions_token_unique": {
 					"name": "sessions_token_unique",
+					"nullsNotDistinct": false,
 					"columns": ["token"]
 				}
-			}
+			},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
 		},
-		"users": {
+		"public.users": {
 			"name": "users",
+			"schema": "",
 			"columns": {
 				"id": {
 					"name": "id",
 					"type": "varchar(100)",
-					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"primaryKey": true,
+					"notNull": true
 				},
 				"scope": {
 					"name": "scope",
 					"type": "varchar(255)",
 					"primaryKey": false,
 					"notNull": false,
-					"autoincrement": false,
 					"default": "'group:default'"
 				},
 				"primary_account_id": {
 					"name": "primary_account_id",
 					"type": "varchar(100)",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"created_at": {
 					"name": "created_at",
-					"type": "datetime",
+					"type": "timestamp",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"updated_at": {
 					"name": "updated_at",
-					"type": "datetime",
+					"type": "timestamp",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				}
 			},
 			"indexes": {},
@@ -293,24 +266,77 @@
 					"onUpdate": "restrict"
 				}
 			},
-			"compositePrimaryKeys": {
-				"users_id": {
-					"name": "users_id",
-					"columns": ["id"]
-				}
-			},
+			"compositePrimaryKeys": {},
 			"uniqueConstraints": {
 				"users_primary_account_id_unique": {
 					"name": "users_primary_account_id_unique",
+					"nullsNotDistinct": false,
 					"columns": ["primary_account_id"]
 				}
-			}
+			},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.watchtime": {
+			"name": "watchtime",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "varchar(100)",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"twitch_id": {
+					"name": "twitch_id",
+					"type": "varchar(100)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"time": {
+					"name": "time",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"date": {
+					"name": "date",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {
+				"watchtime_twitch_id_date_unique": {
+					"name": "watchtime_twitch_id_date_unique",
+					"nullsNotDistinct": false,
+					"columns": ["twitch_id", "date"]
+				}
+			},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
 		}
 	},
+	"enums": {},
 	"schemas": {},
+	"sequences": {},
+	"roles": {},
+	"policies": {},
+	"views": {},
 	"_meta": {
+		"columns": {},
 		"schemas": {},
-		"tables": {},
-		"columns": {}
+		"tables": {}
 	}
 }

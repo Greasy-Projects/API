@@ -21,8 +21,10 @@ const envSchema = z.object({
 		.default("https://greasygang.co/auth/callback"),
 	DB_NAME: z.string(),
 	DB_HOST: z.string().default("localhost"),
+	DB_PORT: z.coerce.number().default(5432),
 	DB_USER: z.string(),
 	DB_PASS: z.string(),
+	DB_CLIENT: z.literal("pg").optional(),
 	GITHUB_TOKEN: z.string().includes("github_pat_"),
 	GITHUB_OWNER: z.string().default("Greasy-Projects"),
 	GITHUB_REPO: z.string().default("content"),
@@ -34,5 +36,9 @@ const envSchema = z.object({
 	PORT: z.string().default("4000"),
 });
 
-export const env = envSchema.parse(process.env);
+export const env = envSchema.parse({
+	...process.env,
+	DB_NAME: process.env.DB_DATABASE ?? process.env.DB_NAME,
+	DB_PASS: process.env.DB_PASSWORD ?? process.env.DB_PASS,
+});
 export default env;

@@ -176,7 +176,7 @@ export async function verifyAuth(request: Request | string, scopes?: Scope[]) {
 		// https://oslo.js.org/reference/jwt/validateJWT
 		const jwt = await validateJWT("HS256", secret, token);
 		payload = jwt.payload as payload;
-	} catch (e) {
+	} catch {
 		throw new GraphQLError("Invalid token");
 	}
 

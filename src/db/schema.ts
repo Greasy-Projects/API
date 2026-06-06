@@ -1,14 +1,13 @@
 import {
-	mysqlTable,
+	pgTable,
 	varchar,
 	text,
-	datetime,
-	mysqlEnum,
-	AnyMySqlColumn,
+	timestamp,
+	type AnyPgColumn,
 	boolean,
-	int,
+	integer,
 	unique,
-} from "drizzle-orm/mysql-core";
+} from "drizzle-orm/pg-core";
 import { createId } from "@paralleldrive/cuid2";
 
 const lengthOf = {
@@ -16,15 +15,16 @@ const lengthOf = {
 };
 
 const createdUpdated = {
-	createdAt: datetime("created_at")
+	createdAt: timestamp("created_at")
 		.notNull()
 		.$defaultFn(() => new Date()),
-	updatedAt: datetime("updated_at")
+	updatedAt: timestamp("updated_at")
 		.notNull()
+		.$defaultFn(() => new Date())
 		.$onUpdate(() => new Date()),
 };
 
-export const users = mysqlTable("users", {
+export const users = pgTable("users", {
 	id: varchar("id", {
 		length: lengthOf.id,
 	})
@@ -45,7 +45,7 @@ export const users = mysqlTable("users", {
 	...createdUpdated,
 });
 
-export const accounts = mysqlTable("user_accounts", {
+export const accounts = pgTable("user_accounts", {
 	id: varchar("id", {
 		length: lengthOf.id,
 	}).primaryKey(),
@@ -57,11 +57,13 @@ export const accounts = mysqlTable("user_accounts", {
 	avatar: varchar("avatar", { length: 255 }),
 	userId: varchar("user_id", {
 		length: lengthOf.id,
-	}).references((): AnyMySqlColumn => users.id, {
+	}).references((): AnyPgColumn => users.id, {
 		onDelete: "cascade",
 		onUpdate: "restrict",
 	}),
-	platform: mysqlEnum("platform", ["twitch", "discord"]).notNull(),
+	platform: varchar("platform", { length: 255 })
+		.$type<"twitch" | "discord">()
+		.notNull(),
 	scope: varchar("scope", {
 		length: 255,
 	}).notNull(),
@@ -71,10 +73,10 @@ export const accounts = mysqlTable("user_accounts", {
 	refreshToken: varchar("refresh_token", {
 		length: 100,
 	}).notNull(),
-	expiresAt: datetime("expires_at").notNull(),
+	expiresAt: timestamp("expires_at").notNull(),
 	...createdUpdated,
 });
-export const minecraftUsers = mysqlTable("minecraft_users", {
+export const minecraftUsers = pgTable("minecraft_users", {
 	id: varchar("id", {
 		length: 36,
 	})
@@ -88,7 +90,7 @@ export const minecraftUsers = mysqlTable("minecraft_users", {
 	whitelisted: boolean("whitelisted").default(true),
 	...createdUpdated,
 });
-export const sessions = mysqlTable("sessions", {
+export const sessions = pgTable("sessions", {
 	id: varchar("id", {
 		length: lengthOf.id,
 	})
@@ -104,10 +106,10 @@ export const sessions = mysqlTable("sessions", {
 	})
 		.notNull()
 		.unique(),
-	expiresAt: datetime("expires_at").notNull(),
+	expiresAt: timestamp("expires_at").notNull(),
 });
 
-export const watchtime = mysqlTable(
+export const watchtime = pgTable(
 	"watchtime",
 	{
 		id: varchar("id", {
@@ -118,9 +120,9 @@ export const watchtime = mysqlTable(
 		twitchId: varchar("twitch_id", {
 			length: lengthOf.id,
 		}).notNull(),
-		time: int("time"),
-		date: datetime("date").notNull(),
-		updatedAt: datetime("updated_at").notNull(),
+		time: integer("time"),
+		date: timestamp("date").notNull(),
+		updatedAt: timestamp("updated_at").notNull(),
 	},
 	t => ({
 		unq: unique().on(t.twitchId, t.date),
@@ -128,7 +130,7 @@ export const watchtime = mysqlTable(
 );
 
 // // TODO: logs table
-// export const logs = mysqlTable(
+// export const logs = pgTable(
 //   "logs",
 //   {
 //     id: varchar("id", {
@@ -136,7 +138,7 @@ export const watchtime = mysqlTable(
 //     })
 //       .primaryKey()
 //       .$defaultFn(() => createId()),
-//     createdAt: datetime("created_at")
+//     createdAt: timestamp("created_at")
 //       .notNull()
 //       .$defaultFn(() => new Date()),
 //     userId: varchar("user_id", {
