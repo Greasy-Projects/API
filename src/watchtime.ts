@@ -3,6 +3,9 @@ import { getToken } from "./auth";
 import { db, watchtime } from "./db";
 import { sql } from "drizzle-orm";
 const streamer = "greasymac";
+const ONE_MINUTE = 60 * 1000;
+const UPDATE_GRACE_PERIOD = 55 * 1000;
+const STALE_VIEWER_PERIOD = 3 * ONE_MINUTE;
 
 // IN TESTING
 export default async () => {
@@ -10,26 +13,18 @@ export default async () => {
 	startOfMonth.setUTCDate(1);
 	startOfMonth.setUTCHours(0, 0, 0, 0);
 
-	const thresholdDate = new Date();
-	thresholdDate.setMinutes(thresholdDate.getMinutes() - 4.7); //4.7 to account for potential delays
-	const FiveMinutesAgo = new Date(thresholdDate);
+	const now = new Date();
+	const oneMinuteAgo = new Date(now.getTime() - UPDATE_GRACE_PERIOD);
+	const staleViewerSince = new Date(now.getTime() - STALE_VIEWER_PERIOD);
 
-	thresholdDate.setMinutes(thresholdDate.getMinutes() - 5);
-	const TenMinutesAgo = new Date(thresholdDate);
+	// New viewers start at 0 minutes. Existing viewers gain one minute when
+	// they are still present after roughly a minute.
+	//
+	// If a viewer has not been seen for several minutes, treat this run as
+	// their return and refresh updatedAt without adding missed time.
 
-	// When a viewer is first observed, their record is inserted into the database with a NULL value for their watch time.
-
-	// If the viewer has been active for more than 5 minutes (indicating their last update was more than 5 minutes ago),
-	// their watch time is increased by 5 minutes.
-
-	// If the viewer hasn't been updated for more than 10 minutes, it suggests they have stopped watching at some point in between.
-	// In this case, we update the "updatedAt" value to the current time,
-	// but we don't increase their watch time.
-	// This ensures that they will receive a +5 increment on the next run,
-	// assuming they haven't left and continue watching.
-
-	const WHEN_FIVE_THEN = sql`WHEN ${watchtime.updatedAt} < ${FiveMinutesAgo} THEN`;
-	const WHEN_TEN_THEN = sql`WHEN ${watchtime.updatedAt} < ${TenMinutesAgo} THEN`;
+	const WHEN_ONE_MINUTE_THEN = sql`WHEN ${watchtime.updatedAt} < ${oneMinuteAgo} THEN`;
+	const WHEN_STALE_THEN = sql`WHEN ${watchtime.updatedAt} < ${staleViewerSince} THEN`;
 
 	// console.log(await db.select().from(watchtime));
 
@@ -82,8 +77,8 @@ export default async () => {
 				.onConflictDoUpdate({
 					target: [watchtime.twitchId, watchtime.date],
 					set: {
-						time: sql`CASE ${WHEN_TEN_THEN} ${watchtime.time} ${WHEN_FIVE_THEN} COALESCE(${watchtime.time}, 0) + 5 ELSE ${watchtime.time} END`,
-						updatedAt: sql`CASE ${WHEN_FIVE_THEN} ${new Date()} ELSE ${watchtime.updatedAt} END`,
+						time: sql`CASE ${WHEN_STALE_THEN} ${watchtime.time} ${WHEN_ONE_MINUTE_THEN} ${watchtime.time} + 1 ELSE ${watchtime.time} END`,
+						updatedAt: sql`CASE ${WHEN_ONE_MINUTE_THEN} ${now} ELSE ${watchtime.updatedAt} END`,
 					},
 				});
 		}

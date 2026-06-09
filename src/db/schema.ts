@@ -119,7 +119,7 @@ export const watchtime = pgTable(
 		twitchId: varchar("twitch_id", {
 			length: lengthOf.id,
 		}).notNull(),
-		time: integer("time"),
+		time: integer("time").notNull().default(0),
 		date: timestamp("date").notNull(),
 		updatedAt: timestamp("updated_at").notNull(),
 	},
