@@ -7,6 +7,7 @@ import {
 	boolean,
 	integer,
 	unique,
+	uuid,
 } from "drizzle-orm/pg-core";
 import { createId } from "@paralleldrive/cuid2";
 
@@ -112,11 +113,9 @@ export const sessions = pgTable("sessions", {
 export const watchtime = pgTable(
 	"watchtime",
 	{
-		id: varchar("id", {
-			length: lengthOf.id,
-		})
+		id: uuid("id")
 			.primaryKey()
-			.$defaultFn(() => createId()),
+			.defaultRandom(),
 		twitchId: varchar("twitch_id", {
 			length: lengthOf.id,
 		}).notNull(),
