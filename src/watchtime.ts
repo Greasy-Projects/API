@@ -4,7 +4,6 @@ import { db, watchtime } from "./db";
 import { sql } from "drizzle-orm";
 const streamer = "greasymac";
 const ONE_MINUTE = 60 * 1000;
-const UPDATE_GRACE_PERIOD = 55 * 1000;
 const STALE_VIEWER_PERIOD = 3 * ONE_MINUTE;
 
 // IN TESTING
@@ -14,7 +13,7 @@ export default async () => {
 	startOfMonth.setUTCHours(0, 0, 0, 0);
 
 	const now = new Date();
-	const oneMinuteAgo = new Date(now.getTime() - UPDATE_GRACE_PERIOD);
+	const oneMinuteAgo = new Date(now.getTime() - ONE_MINUTE);
 	const staleViewerSince = new Date(now.getTime() - STALE_VIEWER_PERIOD);
 
 	// New viewers start at 0 minutes. Existing viewers gain one minute when
@@ -23,7 +22,7 @@ export default async () => {
 	// If a viewer has not been seen for several minutes, treat this run as
 	// their return and refresh updatedAt without adding missed time.
 
-	const WHEN_ONE_MINUTE_THEN = sql`WHEN ${watchtime.updatedAt} < ${oneMinuteAgo} THEN`;
+	const WHEN_ONE_MINUTE_THEN = sql`WHEN ${watchtime.updatedAt} <= ${oneMinuteAgo} THEN`;
 	const WHEN_STALE_THEN = sql`WHEN ${watchtime.updatedAt} < ${staleViewerSince} THEN`;
 
 	// console.log(await db.select().from(watchtime));
